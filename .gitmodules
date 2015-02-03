@@ -1,0 +1,6 @@
+[submodule "des"]
+	path = des
+	url = git@github.com:dexset/des.git
+[submodule "descore"]
+	path = descore
+	url = git@github.com:dexset/descore.git
