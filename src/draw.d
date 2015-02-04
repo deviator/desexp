@@ -4,6 +4,9 @@ import des.gl;
 import des.space;
 import des.math.linear;
 import des.util.logsys;
+import des.util.helpers;
+
+import loader;
 
 enum SS_TEST =
 `//### vert
@@ -24,6 +27,7 @@ class TestDraw : GLSimpleObject, SpaceNode
 protected:
 
     GLBuffer pos;
+    GLBuffer ind;
 
 public:
 
@@ -31,17 +35,22 @@ public:
     {
         super( SS_TEST );
 
+        auto ll = new Loader( appPath( "..", "data", "abstract_model.dae" ) );
+
         pos = createArrayBuffer();
         auto loc = shader.getAttribLocation( "pos" );
         setAttribPointer( pos, loc, 3, GLType.FLOAT );
+        pos.setData( ll.vertices );
 
-        pos.setData( [vec3(0), vec3(1), vec3(0,1,0), vec3(1,0,0)] );
+        ind = createIndexBuffer();
+        ind.setData( ll.indices );
     }
 
     void draw( Camera cam )
     {
         shader.setUniform!mat4( "prj", cam.projection.matrix * cam.resolve(this) );
 
-        drawArrays( DrawMode.POINTS );
+        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+        drawArrays( DrawMode.TRIANGLES );
     }
 }

@@ -22,6 +22,7 @@ protected:
         connect( key, &keyReaction );
         connect( key, &(cam.keyReaction) );
         connect( mouse, &(cam.mouseReaction) );
+        connect( event.resized, (ivec2 sz){ cam.ratio = sz.w / cast(float)sz.h; });
 
         connect( draw, &drawFunc );
 
