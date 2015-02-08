@@ -5,96 +5,61 @@ import std.conv : to;
 import des.gl;
 import des.space;
 import des.math.linear;
-import des.util.logsys;
 import des.util.helpers;
-import des.util.stdext.algorithm;
 
-import loader;
+import des.il.io;
 
-enum SS_TEST =
-`//### vert
-#version 330
-in vec3 pos;
-uniform mat4 prj;
-void main() { gl_Position = prj * vec4( pos, 1.0 ); }
-//### frag
-#version 330
-out vec4 ocolor;
-void main(void) { ocolor = vec4(1,0,0,1); }
-`;
+import std.file;
+import std.math;
 
-class DrawMesh : GLSimpleObject, SpaceNode
+class TestDraw : GLMeshObject, SpaceNode
 {
     mixin SpaceNodeHelper;
-
 protected:
 
-    GLBuffer vertices;
-    GLBuffer normals;
-    GLBuffer[] texcrds;
-    GLBuffer indices;
+    GLTexture tex;
 
-    abstract void prepareAttribPointers();
+    float time = 0;
 
 public:
 
-    this( string shader_src, MeshData md )
-    {
-        super( shader_src );
-
-        vertices = createArrayBuffer();
-        vertices.setData( md.vertices );
-
-        if( md.normals.length )
-        {
-            normals = newEMM!GLBuffer();
-            normals.setData( md.normals );
-        }
-
-        foreach( i; 0 .. md.texcrds.length )
-        {
-            auto tbuf = newEMM!GLBuffer();
-            switch( md.texcrdsdims[i] )
-            {
-                case 1:
-                    tbuf.setData( amap!(a=>a.x)( md.texcrds[i] ) );
-                    break;
-                case 2:
-                    tbuf.setData( amap!(a=>a.xy)( md.texcrds[i] ) );
-                    break;
-                case 3:
-                    tbuf.setData( md.texcrds[i] );
-                    break;
-                default:
-                    throw new Exception( "WTF?: texture coordinate dims == " ~ 
-                            to!string( md.texcrdsdims[i] ) );
-            }
-            texcrds ~= tbuf;
-        }
-
-        if( md.indices.length )
-        {
-            indices = createIndexBuffer();
-            indices.setData( md.indices );
-        }
-
-        prepareAttribPointers();
-    }
-}
-
-class TestDraw : DrawMesh
-{
     this()
     {
-        auto ll = new Loader( appPath( "..", "data", "abstract_model.dae" ) );
-        super( SS_TEST, ll.meshes[0] );
+        auto ll = new SceneLoader( appPath( "..", "data", "abstract_model.dae" ) );
+        super( readText( appPath( "..", "data", "shader.glsl" ) ), ll.meshes[0] );
+        tex = newEMM!GLTexture( GLTexture.Target.T2D );
+        tex.setParameter( GLTexture.Parameter.MIN_FILTER, GLTexture.Filter.NEAREST );
+        tex.setParameter( GLTexture.Parameter.MAG_FILTER, GLTexture.Filter.NEAREST );
+        tex.image( imLoad( appPath( "..", "data", "abstract_model_color.png" ) ) );
+    }
+
+    void idle( float dt )
+    {
+        time += dt;
+
+        float a = time * 2;
+        float b = time * 1;
+
+        auto v = vec3( cos(a), sin(a), 1 );
+        auto q = quat.fromAngle( sin(b) * 0.01, v );
+
+        auto o = vec3( 0,0, sin( time * 3 ) * 0.05 + 0.2 );
+
+        self_mtr = quatAndPosToMatrix( q, o );
     }
 
     void draw( Camera cam )
     {
-        shader.setUniform!mat4( "prj", cam.projection.matrix * cam.resolve(this) );
+        tex.bind();
+        auto tr = cam.resolve(this);
+        shader.setUniform!mat4( "prj", cam.projection.matrix * tr );
+        shader.setUniform!vec3( "light1", vec3( -5,-8,3 ) );
+        shader.setUniform!vec3( "light2", vec3( 5,8,12 ) );
+        shader.setUniform!vec3( "campos", cam.offset );
+        shader.setUniform!uint( "use_texture", 1u );
 
-        glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+        glEnable( GL_DEPTH_TEST );
+        //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
         drawArrays( DrawMode.TRIANGLES );
     }
 
@@ -102,7 +67,48 @@ protected:
 
     override void prepareAttribPointers()
     {
-        auto loc = shader.getAttribLocation( "pos" );
-        setAttribPointer( vertices, loc, 3, GLType.FLOAT );
+        auto loc = shader.getAttribLocations( "in_pos", "in_uv", "in_norm" );
+        setAttribPointer( vertices, loc[0], 3, GLType.FLOAT );
+
+        setAttribPointer( texcrds[0], loc[1], 2, GLType.FLOAT );
+
+        setAttribPointer( normals, loc[2], 3, GLType.FLOAT );
+    }
+}
+
+class RoomDraw : GLMeshObject, SpaceNode
+{
+    mixin SpaceNodeHelper;
+
+    this()
+    {
+        auto ll = new SceneLoader( appPath( "..", "data", "room.dae" ) );
+        super( readText( appPath( "..", "data", "shader.glsl" ) ), ll.meshes[0] );
+
+        self_mtr[2][3] = -1;
+    }
+
+    void draw( Camera cam )
+    {
+        auto tr = cam.resolve(this);
+        shader.setUniform!mat4( "prj", cam.projection.matrix * tr );
+        shader.setUniform!vec3( "light1", vec3( -5,-8,3 ) );
+        shader.setUniform!vec3( "light2", vec3( 5,8,12 ) );
+        shader.setUniform!vec3( "campos", cam.offset );
+        shader.setUniform!uint( "use_texture", 0u );
+
+        glEnable( GL_DEPTH_TEST );
+        //glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
+        drawArrays( DrawMode.TRIANGLES );
+    }
+
+protected:
+
+    override void prepareAttribPointers()
+    {
+        auto loc = shader.getAttribLocations( "in_pos", "in_uv", "in_norm" );
+        setAttribPointer( vertices, loc[0], 3, GLType.FLOAT );
+
+        setAttribPointer( normals, loc[2], 3, GLType.FLOAT );
     }
 }

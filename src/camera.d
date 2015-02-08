@@ -5,8 +5,9 @@ import des.math.linear;
 import des.space;
 
 import des.app.event;
+import des.util.logsys;
 
-class MCamera : SimpleCamera
+class MouseControlCamera : SimpleCamera
 {
 protected:
 
@@ -17,22 +18,28 @@ protected:
     float offset_coef = 50.0f;
     float y_angle_limit = PI_2 - 0.01;
 
+    bool modkey = false;
+
 public:
 
-    this()
+    this( vec3 initial=vec3(0,10,2) )
     {
         super();
-        orb = vec3(0,10,2);
+        orb = initial;
         target = vec3(0);
         up = vec3(0,0,1);
-        near = 1;
+        near = 0.1;
         updatePos();
     }
 
     void mouseReaction( in MouseEvent ev )
     {
         if( ev.type == MouseEvent.Type.WHEEL )
-            moveFront( -ev.whe.y * 0.1 );
+        {
+            if( modkey ) zoom( ev.whe.y );
+            else moveFront( -ev.whe.y * 0.1 );
+
+        }
 
         if( ev.type == ev.Type.MOTION )
         {
@@ -51,16 +58,34 @@ public:
         }
     }
 
-    void keyReaction( in KeyboardEvent ev )
+    void keyReaction( in KeyboardEvent ke )
     {
-        if( ev.scan == ev.Scan.NUMBER_0 )
+        if( ke.scan == ke.Scan.P && ke.pressed )
         {
-            look_tr.target = vec3(0,0,0);
-            updatePos();
+            if( isPerspective ) setOrtho();
+            else setPerspective();
         }
+
+        if( ke.scan == ke.Scan.LSHIFT ) modkey = ke.pressed;
     }
 
 protected:
+
+    void zoom( int z )
+    {
+        float k = 1.05;
+        if( z > 0 )
+        {
+            scale = scale * k;
+            fov = fov / k;
+        }
+        else
+        {
+            scale = scale / k;
+            fov = fov * k;
+        }
+
+    }
 
     void moveFront( float dist )
     {
