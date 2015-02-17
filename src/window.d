@@ -5,8 +5,9 @@ import des.util.stdext.algorithm;
 import des.util.logsys;
 import des.util.timer;
 
-import draw;
 import camera;
+
+import draw;
 
 class MainWindow : DesWindow
 {
@@ -14,41 +15,26 @@ class MainWindow : DesWindow
 protected:
 
     MouseControlCamera cam;
-    TestDraw obj;
-    RoomDraw room;
-    Timer tm;
+
+    TestScene scene;
 
     override void prepare()
     {
         cam = new MouseControlCamera;
-        tm = new Timer;
 
-        connect( key, &keyReaction );
+        scene = newEMM!TestScene( cam );
+
+        connect( key, ( in KeyboardEvent ke )
+        {
+            if( ke.scan == ke.Scan.ESCAPE )
+                app.quit();
+        });
         connect( mouse, &(cam.mouseReaction) );
         connect( key, &(cam.keyReaction) );
         connect( event.resized, (ivec2 sz){ cam.ratio = sz.w / cast(float)sz.h; });
 
-        connect( draw, &drawFunc );
-        connect( idle, &idleFunc );
-
-        obj = newEMM!TestDraw;
-        room = newEMM!RoomDraw;
-    }
-
-    void keyReaction( in KeyboardEvent ke )
-    {
-        if( ke.scan == ke.Scan.ESCAPE ) app.quit();
-    }
-
-    void idleFunc()
-    {
-        obj.idle( tm.cycle() );
-    }
-
-    void drawFunc()
-    {
-        obj.draw( cam );
-        room.draw( cam );
+        connect( draw, &(scene.draw) );
+        connect( idle, &(scene.idle) );
     }
 
 public:
