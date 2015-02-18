@@ -1,0 +1,14 @@
+{
+	"name": "desengine",
+    "description": "D Extended Set Engine",
+    "authors": ["Oleg Butko(deviator)", "Anton Akzhigitov(Akzwar)"],
+    "license": "MIT",
+	"targetType": "sourceLibrary",
+	"importPaths": [ "import" ],
+	"sourcePaths": [ "import" ],
+	"dependencies": {
+        "descore": ">=1.2.3",
+        "des": ">=1.3.3",
+        "derelict-assimp3": ">=1.0.0"
+	}
+}

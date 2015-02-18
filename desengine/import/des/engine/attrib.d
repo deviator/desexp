@@ -1,4 +1,4 @@
-module engine.attrib;
+module des.engine.attrib;
 
 import des.gl.base.type;
 

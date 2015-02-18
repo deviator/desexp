@@ -1,10 +1,10 @@
-module engine.object;
+module des.engine.object;
 
-import engine.base;
-import engine.attrib;
+import des.engine.base;
+import des.engine.attrib;
 
-import engine.material;
-import engine.shader;
+import des.engine.material;
+import des.engine.shader;
 
 ///
 class DrawObject : GLObject, SpaceNode
@@ -55,7 +55,7 @@ public:
         if( !visible ) return;
 
         shader.setMaterial( material );
-        shader.setTransform( camera.resolve(this), camera.projection.matrix );
+        shader.setTransform( camera.resolve(this), camera.projectMatrix );
 
         checkGLCall!glEnable( GL_DEPTH_TEST );
 

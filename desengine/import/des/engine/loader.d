@@ -1,4 +1,4 @@
-module engine.loader;
+module des.engine.loader;
 
 import derelict.assimp3.assimp;
 import derelict.assimp3.types;
@@ -6,8 +6,8 @@ import derelict.assimp3.types;
 import des.util.data.type;
 import des.util.stdext.string;
 
-import engine.base;
-import engine.attrib;
+import des.engine.base;
+import des.engine.attrib;
 
 ///
 class LoaderException : EngineException

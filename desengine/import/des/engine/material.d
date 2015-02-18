@@ -1,4 +1,4 @@
-module engine.material;
+module des.engine.material;
 
 import des.math.linear;
 import des.gl.base;
@@ -6,8 +6,8 @@ import des.util.arch;
 
 import des.il;
 
-import engine.base;
-import engine.shader;
+import des.engine.base;
+import des.engine.shader;
 
 ///
 class TxData : DesObject

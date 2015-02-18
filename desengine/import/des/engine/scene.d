@@ -1,4 +1,4 @@
-module engine.scene;
+module des.engine.scene;
 
 import std.exception;
 
@@ -7,12 +7,12 @@ import des.gl.base;
 import des.util.arch;
 import des.util.timer;
 
-import engine.attrib;
-import engine.base;
-import engine.material;
-import engine.object;
-import engine.light;
-import engine.shader;
+import des.engine.attrib;
+import des.engine.base;
+import des.engine.material;
+import des.engine.object;
+import des.engine.light;
+import des.engine.shader;
 
 ///
 class Scene : DesObject
@@ -43,12 +43,12 @@ public:
     Light light;
 
     ///
-    this( Camera camera )
+    this( Camera camera, Light light )
     in{ assert( camera !is null ); } body
     {
         this.camera = camera;
+        this.light = light is null ? newEMM!Light : light;
         obj_shader = newEMM!ObjectShader;
-        light = newEMM!Light;
         tm = new Timer;
         //fbo = newEMM!GLFrameBuffer;
     }
@@ -74,7 +74,7 @@ public:
 
 protected:
 
-    void drawObjets()
+    void drawObjects()
     {
         obj_shader.use();
         obj_shader.setLight( camera, light );

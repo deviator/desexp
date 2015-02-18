@@ -1,9 +1,9 @@
-module engine.shader;
+module des.engine.shader;
 
-import engine.base;
+import des.engine.base;
 
-import engine.light;
-import engine.material;
+import des.engine.light;
+import des.engine.material;
 
 auto getShaders( string[] path... )
 {
@@ -32,7 +32,7 @@ class ObjectShader : CommonGLShaderProgram
         setUniform!vec3( "light.diffuse", light.diffuse );
         setUniform!vec3( "light.specular", light.specular );
         setUniform!vec3( "light.attenuation", light.attenuation );
-        setUniform!vec3( "light.cspos", ( camera.resolve(null) * vec4(light.pos,1.0)).xyz );
+        setUniform!vec3( "light.cspos", ( camera.resolve(light).tr( vec3(0),1.0 ) ) );
     }
 
     void setMaterial( Material mat )

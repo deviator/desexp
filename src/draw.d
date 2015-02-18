@@ -12,7 +12,7 @@ import des.il.io;
 import std.file;
 import std.math;
 
-import engine;
+import des.engine;
 
 class TestScene : Scene
 {
@@ -20,7 +20,7 @@ class TestScene : Scene
 
     this( Camera cam )
     {
-        super( cam );
+        super( cam, newEMM!MoveLight );
 
         loader = newEMM!Loader;
 
@@ -74,6 +74,18 @@ protected:
         auto o = new DrawObject( md, mat );
         o.setTransform( mat4.diag(3).setCol(3,vec4(0,0,-1,1)) );
         addObject( o );
+    }
+}
+
+class MoveLight : Light
+{
+    float time = 0;
+    override void idle( float dt )
+    {
+        time += dt;
+        import std.math;
+        auto t = time * 2;
+        offset = vec3( vec2( cos(t), sin(t) ) * 5, offset.z );
     }
 }
 
