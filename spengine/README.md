@@ -1,4 +1,6 @@
-## D Extended Set library
+## D Extended Set Engine
+
+Minimal 3D engine
 
 Documentation orient to [harbored-mod](https://github.com/kiith-sa/harbored-mod)
 

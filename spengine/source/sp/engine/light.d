@@ -1,11 +1,12 @@
-module des.engine.light;
+module sp.engine.light;
 
-import des.engine.base;
+import sp.engine.base;
 
-class Light : SpaceNode
+class SPLight : SpaceNode
 {
     mixin SpaceNodeHelper;
 
+    int type = 0;
     vec3 ambient = vec3(0.05);
     vec3 diffuse = vec3(1);
     vec3 specular = vec3(1);

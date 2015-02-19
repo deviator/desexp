@@ -12,20 +12,22 @@ import des.il.io;
 import std.file;
 import std.math;
 
-import des.engine;
+import sp.engine;
 
-class TestScene : Scene
+import des.util.stdext.algorithm;
+
+class TestScene : SPScene
 {
-    Loader loader;
+    SPLoader loader;
 
     this( Camera cam )
     {
-        super( cam, newEMM!MoveLight );
+        super( cam, newEMM!MoveLight( 10, 5, 0.2, vec3(1,0.05,0.025) ) );
 
-        loader = newEMM!Loader;
+        loader = newEMM!SPLoader;
 
-        //prepareAbstractModel();
-        //prepareRoomModel();
+        prepareAbstractModel();
+        prepareRoomModel();
         preparePlaneModel();
     }
 
@@ -35,7 +37,7 @@ protected:
     {
         loader.loadScene( appPath( "..", "data", "abstract_model.dae" ) );
 
-        auto mat = newEMM!Material();
+        auto mat = newEMM!SPMaterial();
         mat.diffuse.image( imLoad( appPath( "..", "data", "abstract_model_color.png" ) ) );
 
         addObject( new TestObject( loader.getMeshData(0), mat ) );
@@ -45,51 +47,65 @@ protected:
     {
         loader.loadScene( appPath( "..", "data", "room.dae" ) );
 
-        auto mat = newEMM!Material();
+        auto mat = newEMM!SPMaterial();
         mat.diffuse.image( imLoad( appPath( "..", "data", "masonry-wall-texture.jpg" ) ) );
         mat.normal.image( imLoad( appPath( "..", "data", "masonry-wall-normal-map.jpg" ) ) );
 
-        addObject( new DrawObject( loader.getMeshData(0), mat ) );
+        auto o = new SPDrawObject( loader.getMeshData(0), mat );
+        o.offset = vec3(0,0,-2);
+        addObject( o );
     }
 
     void preparePlaneModel()
     {
-        MeshData md;
+        SPMeshData md;
 
-        md.vertices = Attrib( 0, 3, GLType.FLOAT, [vec3(1,1,0),vec3(1,-1,0),vec3(-1,-1,0),vec3(-1,1,0)] );
+        md.vertices = SPDrawObjectAttrib( 0, 3, GLType.FLOAT, [vec3(1,1,0),vec3(1,-1,0),vec3(-1,-1,0),vec3(-1,1,0)] );
         md.indices = [ 0, 1, 3, 1, 2, 3 ];
-        md.attribs["texcoords"] = Attrib( 1, 2, GLType.FLOAT, [vec2(1,1),vec2(1,0),vec2(0,0),vec2(0,1)] );
+        auto tex_repeat = 10;
+        md.attribs["texcoords"] = SPDrawObjectAttrib( 1, 2, GLType.FLOAT, amap!(a=>a*tex_repeat)( [vec2(1,1),vec2(1,0),vec2(0,0),vec2(0,1)] ) );
         auto x = vec3(1,0,0);
         auto z = vec3(0,0,1);
-        md.attribs["normals"] = Attrib( 2, 3, GLType.FLOAT, [z,z,z,z] );
-        md.attribs["tangents"] = Attrib( 3, 3, GLType.FLOAT, [x,x,x,x] );
+        md.attribs["normals"] = SPDrawObjectAttrib( 2, 3, GLType.FLOAT, [z,z,z,z] );
+        md.attribs["tangents"] = SPDrawObjectAttrib( 3, 3, GLType.FLOAT, [x,x,x,x] );
 
-        auto mat = newEMM!Material();
+        auto mat = newEMM!SPMaterial();
         mat.diffuse.image( imLoad( appPath( "..", "data", "masonry-wall-texture.jpg" ) ) );
         mat.bump.image( imLoad( appPath( "..", "data", "masonry-wall-bump-map.jpg" ) ) );
         mat.bump_tr = vec2( 0.03, 0.02 );
         mat.normal.image( imLoad( appPath( "..", "data", "masonry-wall-normal-map.jpg" ) ) );
         mat.specular.val = vec4(vec3(0.2),1);
 
-        auto o = new DrawObject( md, mat );
-        o.setTransform( mat4.diag(3).setCol(3,vec4(0,0,-1,1)) );
+        auto o = new SPDrawObject( md, mat );
+        o.setTransform( mat4.diag(tex_repeat*1.5).setCol(3,vec4(0,0,-1.5,1)) );
         addObject( o );
     }
 }
 
-class MoveLight : Light
+class MoveLight : SPLight
 {
+    this( float Z, float R = 5, float S = 0.2, vec3 att = vec3(1,0.1,0.01) )
+    {
+        offset = vec3( offset.xy, Z );
+        radius = R;
+        speed = S;
+        attenuation = att;
+    }
+
+    float speed = 0.2;
+    float radius = 5;
     float time = 0;
+
     override void idle( float dt )
     {
         time += dt;
         import std.math;
-        auto t = time * 2;
-        offset = vec3( vec2( cos(t), sin(t) ) * 5, offset.z );
+        auto t = time * 2 * PI * speed;
+        offset = vec3( vec2( cos(t), sin(t) ) * radius, offset.z );
     }
 }
 
-class TestObject : DrawObject
+class TestObject : SPDrawObject
 {
 protected:
 
@@ -97,7 +113,7 @@ protected:
 
 public:
 
-    this( in MeshData info, Material mat )
+    this( in SPMeshData info, SPMaterial mat )
     in { assert( mat !is null ); } body
     {
         super( info, mat );

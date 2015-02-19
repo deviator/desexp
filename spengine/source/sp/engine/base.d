@@ -1,4 +1,4 @@
-module des.engine.base;
+module sp.engine.base;
 
 public
 {
@@ -10,7 +10,7 @@ public
 }
 
 ///
-class EngineException : Exception
+class SPEngineException : Exception
 {
     ///
     this( string msg, string file=__FILE__, size_t line=__LINE__ ) pure nothrow @safe

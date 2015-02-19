@@ -1,9 +1,9 @@
-module des.engine.attrib;
+module sp.engine.attrib;
 
 import des.gl.base.type;
 
 ///
-struct Attrib
+struct SPDrawObjectAttrib
 {
     /// by default invalid value < 0
     int location = -1;
@@ -43,12 +43,12 @@ struct Attrib
 }
 
 ///
-struct MeshData
+struct SPMeshData
 {
     ///
-    Attrib vertices;
+    SPDrawObjectAttrib vertices;
     ///
     uint[] indices;
     ///
-    Attrib[string] attribs;
+    SPDrawObjectAttrib[string] attribs;
 }

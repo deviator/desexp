@@ -1,4 +1,4 @@
-module des.engine.scene;
+module sp.engine.scene;
 
 import std.exception;
 
@@ -7,15 +7,15 @@ import des.gl.base;
 import des.util.arch;
 import des.util.timer;
 
-import des.engine.attrib;
-import des.engine.base;
-import des.engine.material;
-import des.engine.object;
-import des.engine.light;
-import des.engine.shader;
+import sp.engine.attrib;
+import sp.engine.base;
+import sp.engine.material;
+import sp.engine.object;
+import sp.engine.light;
+import sp.engine.shader;
 
 ///
-class Scene : DesObject
+class SPScene : DesObject
 {
     mixin DES;
 
@@ -24,10 +24,10 @@ protected:
     //GLFrameBuffer fbo;
 
     ///
-    ObjectShader obj_shader;
+    SPObjectShader obj_shader;
 
     ///
-    DrawObject[] objs;
+    SPDrawObject[] objs;
 
     ///
     float time = 0;
@@ -40,21 +40,21 @@ public:
     ///
     Camera camera;
     ///
-    Light light;
+    SPLight light;
 
     ///
-    this( Camera camera, Light light )
+    this( Camera camera, SPLight light )
     in{ assert( camera !is null ); } body
     {
         this.camera = camera;
-        this.light = light is null ? newEMM!Light : light;
-        obj_shader = newEMM!ObjectShader;
+        this.light = light is null ? newEMM!SPLight : light;
+        obj_shader = newEMM!SPObjectShader;
         tm = new Timer;
         //fbo = newEMM!GLFrameBuffer;
     }
 
     ///
-    void addObject( DrawObject obj )
+    void addObject( SPDrawObject obj )
     in{ assert( obj !is null ); } body
     { objs ~= registerChildEMM( obj ); }
 

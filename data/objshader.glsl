@@ -44,7 +44,7 @@ struct TxData
 {
     sampler2D tex;
     vec4 val;
-    uint use_tex;
+    bool use_tex;
 };
 
 uniform struct Material
@@ -58,6 +58,7 @@ uniform struct Material
 
 uniform struct Light
 {
+    int  type;
     vec3 ambient;
     vec3 diffuse;
     vec3 specular;
@@ -65,13 +66,10 @@ uniform struct Light
     vec3 cspos;
 } light;
 
-out vec4 color;
-
-vec4 getValue( TxData tx, vec2 uv )
+vec4 getValue( TxData tx, vec2 uv, bool nut=false )
 {
-    if( tx.use_tex != 0u )
-        return texture2D( tx.tex, uv );
-    else return tx.val;
+    if( !tx.use_tex || nut ) return tx.val;
+    else return texture2D( tx.tex, uv );
 }
 
 mat3 tangentSpace()
@@ -82,39 +80,85 @@ mat3 tangentSpace()
     return mat3( t, b, n );
 }
 
-void main()
+uniform struct AttribUse
 {
-    mat3 ts = tangentSpace();
+    bool texcoord;
+    bool normal;
+    bool tangent;
+} attrib_use;
 
-    float hsb = getValue( material.bump, vert.uv ).r * material.bump_tr.x -
-                material.bump_tr.y;
+out vec4 color;
 
-    vec2 uv = vert.uv + normalize( (-vert.pos * ts) ).xy * hsb;
+/// ambient, diffuse, specular
+vec3[3] calcLight( Light ll, vec3 pos, vec3 norm )
+{
+    vec3[3] ret;
+    ret[0] = vec3(0);
+    ret[1] = vec3(0);
+    ret[2] = vec3(0);
 
-    vec3 normal = normalize( ts * ( getValue( material.normal, uv ).xyz * 2 - vec3(1) ) );
+    if( ll.type < 0 ) return ret;
 
-    vec3 lightVec = light.cspos - vert.pos;
-    float lightDst = length( lightVec );
-    vec3 lightDir = normalize( lightVec );
+    vec3 lvec = ll.cspos - pos;
+    vec3 ldir = normalize( lvec );
+    float ldst = length( lvec );
 
-    float atten = 1.0f / ( light.attenuation.x +
-                           light.attenuation.y * lightDst + 
-                           light.attenuation.z * lightDst * lightDst );
+    float atten = 1.0f / ( ll.attenuation.x +
+                           ll.attenuation.y * ldst + 
+                           ll.attenuation.z * ldst * ldst );
 
-    float nxdir = max( 0.0, dot( normal, lightDir ) );
+    float nxdir = max( 0.0, dot( norm, ldir ) );
 
-    vec3 rlSpecular = vec3(0);
-    vec3 rlDiffuse = light.diffuse * nxdir * atten;
+    ret[0] = ll.ambient;
+    ret[1] = ll.diffuse * nxdir * atten;
 
     if( nxdir != 0.0 )
     {
-        vec3 cvec = normalize( -vert.pos );
-        vec3 hv = normalize( lightVec + cvec );
-        float nxhalf = max( 0.0, dot( normal, hv ) );
-        rlSpecular = light.specular * pow( nxhalf, 2 ) * atten;
+        vec3 cvec = normalize( -pos );
+        vec3 hv = normalize( lvec + cvec );
+        float nxhalf = max( 0.0, dot( norm, hv ) );
+        ret[2] = ll.specular * pow( nxhalf, 2 ) * atten;
     }
 
-    color = vec4( light.ambient, 1.0 ) +
-            vec4( rlDiffuse, 1.0 ) * getValue( material.diffuse, uv ) +
-            vec4( rlSpecular, 1.0 ) * getValue( material.specular, uv );
+    return ret;
+}
+
+void main()
+{
+    vec2 bump_tr = material.bump_tr;
+    bool nutc = false;
+    bool nutt = false;
+
+    if( !attrib_use.texcoord )
+    {
+        nutc = true;
+        nutt = true;
+    }
+
+    if( !attrib_use.normal )
+    {
+        color = getValue( material.diffuse, vert.uv, nutc );
+        return;
+    }
+
+    if( !attrib_use.tangent )
+    {
+        bump_tr = vec2(0);
+        nutt = true;
+    }
+
+    mat3 ts = tangentSpace();
+
+    float hsb = getValue( material.bump, vert.uv, nutt ).r * bump_tr.x -
+                bump_tr.y;
+
+    vec2 uv = vert.uv + normalize( (-vert.pos * ts) ).xy * hsb;
+
+    vec3 normal = normalize( ts * ( getValue( material.normal, uv, nutt ).xyz * 2 - vec3(1) ) );
+
+    vec3[3] lr = calcLight( light, vert.pos, normal );
+
+    color = vec4( lr[0], 1.0 ) +
+            vec4( lr[1], 1.0 ) * getValue( material.diffuse, uv, nutc ) +
+            vec4( lr[2], 1.0 ) * getValue( material.specular, uv, nutc );
 }

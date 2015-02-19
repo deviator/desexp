@@ -2,8 +2,8 @@
     "name": "desexp",
     "targetPath": "bin",
     "targetType": "executable",
-    "importPaths": [ "des/import", "descore/import", "desengine/import" ],
-    "sourcePaths": [ "src", "des/import", "descore/import", "desengine/import" ],
+    "importPaths": [ "des/import", "descore/import", "spengine/source" ],
+    "sourcePaths": [ "src", "des/import", "descore/import", "spengine/source" ],
     "stringImportPaths": [ "data" ],
     "dependencies":
     {

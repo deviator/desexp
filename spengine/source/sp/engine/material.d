@@ -1,4 +1,4 @@
-module des.engine.material;
+module sp.engine.material;
 
 import des.math.linear;
 import des.gl.base;
@@ -6,11 +6,11 @@ import des.util.arch;
 
 import des.il;
 
-import des.engine.base;
-import des.engine.shader;
+import sp.engine.base;
+import sp.engine.shader;
 
 ///
-class TxData : DesObject
+class SPTxData : DesObject
 {
     mixin DES;
 
@@ -19,11 +19,12 @@ class TxData : DesObject
     ///
     vec4 val = vec4(0);
     ///
-    uint use_tex = 0;
+    bool use_tex = 0;
 
     ///
-    this( uint tu )
+    this( uint tu, vec4 val )
     {
+        this.val = val;
         tex = newEMM!GLTexture( GLTexture.Target.T2D, tu );
         tex.setParameter( GLTexture.Parameter.MIN_FILTER, GLTexture.Filter.NEAREST );
         tex.setParameter( GLTexture.Parameter.MAG_FILTER, GLTexture.Filter.NEAREST );
@@ -41,12 +42,12 @@ class TxData : DesObject
 }
 
 ///
-class Material : DesObject
+class SPMaterial : DesObject
 {
     mixin DES;
 
     ///
-    TxData diffuse, specular, bump, normal;
+    SPTxData diffuse, specular, bump, normal;
 
     // tx ambient; tx emission; float shininess;
 
@@ -58,16 +59,9 @@ class Material : DesObject
     ///
     this()
     {
-        diffuse = newEMM!TxData( 0 );
-        diffuse.val = vec4(vec3(0.5),1);
-
-        specular = newEMM!TxData( 1 );
-        specular.val = vec4(0.5);
-
-        bump = newEMM!TxData( 2 );
-        bump.val = vec4(0);
-
-        normal = newEMM!TxData( 3 );
-        normal.val = vec4( 0.5, 0.5, 1, 1 );
+        diffuse  = newEMM!SPTxData( 0, vec4( vec3(.5), 1 ) );
+        specular = newEMM!SPTxData( 1, vec4( vec3(.5), 1 ) );
+        bump     = newEMM!SPTxData( 2, vec4(0) );
+        normal   = newEMM!SPTxData( 3, vec4(.5,.5,1,1) );
     }
 }

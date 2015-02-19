@@ -1,9 +1,9 @@
-module des.engine.shader;
+module sp.engine.shader;
 
-import des.engine.base;
+import sp.engine.base;
 
-import des.engine.light;
-import des.engine.material;
+import sp.engine.light;
+import sp.engine.material;
 
 auto getShaders( string[] path... )
 {
@@ -12,7 +12,7 @@ auto getShaders( string[] path... )
     return parseGLShaderSource( readText( appPath( path ) ) );
 }
 
-class ObjectShader : CommonGLShaderProgram
+class SPObjectShader : CommonGLShaderProgram
 {
     this()
     {
@@ -26,16 +26,17 @@ class ObjectShader : CommonGLShaderProgram
         setUniform!mat4( "cspace", tr );
     }
 
-    void setLight( Camera camera, Light light )
+    void setLight( Camera camera, SPLight light )
     {
+        setUniform!int ( "light.type", light.type );
         setUniform!vec3( "light.ambient", light.ambient );
         setUniform!vec3( "light.diffuse", light.diffuse );
         setUniform!vec3( "light.specular", light.specular );
         setUniform!vec3( "light.attenuation", light.attenuation );
-        setUniform!vec3( "light.cspos", ( camera.resolve(light).tr( vec3(0),1.0 ) ) );
+        setUniform!vec3( "light.cspos", camera.resolve(light).offset );
     }
 
-    void setMaterial( Material mat )
+    void setMaterial( SPMaterial mat )
     {
         setTxData( "material.diffuse", mat.diffuse );
         setTxData( "material.specular", mat.specular );
@@ -44,17 +45,34 @@ class ObjectShader : CommonGLShaderProgram
         setTxData( "material.normal", mat.normal );
     }
 
+    void setAttribs( int[] enabled )
+    {
+        auto list = [ "texcoord", "normal", "tangent" ];
+
+        enforce( canFindAttrib( enabled, "vertex" ) );
+
+        foreach( a; list )
+            setUniform!bool( "attrib_use." ~ a,
+                    canFindAttrib( enabled, a ) );
+    }
+
 protected:
 
-    override uint[string] attribLocations()
+    override uint[string] attribLocations() @property
     {
         return [ "vertex" : 0, "texcoord" : 1,
                  "normal" : 2, "tangent" : 3 ];
     }
 
-    void setTxData( string name, TxData tx )
+    bool canFindAttrib( int[] attribs, string name )
     {
-        setUniform!uint( name ~ ".use_tex", tx.use_tex );
+        import std.algorithm;
+        return canFind( attribs, attribLocations[name] );
+    }
+
+    void setTxData( string name, SPTxData tx )
+    {
+        setUniform!bool( name ~ ".use_tex", tx.use_tex );
         setUniform!vec4( name ~ ".val", tx.val );
         if( tx.use_tex )
         {

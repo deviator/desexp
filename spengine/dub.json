@@ -1,11 +1,12 @@
 {
 	"name": "desengine",
-    "description": "D Extended Set Engine",
-    "authors": ["Oleg Butko(deviator)", "Anton Akzhigitov(Akzwar)"],
+    "description": "Strange Perception Engine: minimal 3D game engine",
+    "authors": [ 
+        "Oleg Butko(deviator)",
+        "Anton Akzhigitov(Akzwar)"
+    ],
     "license": "MIT",
 	"targetType": "sourceLibrary",
-	"importPaths": [ "import" ],
-	"sourcePaths": [ "import" ],
 	"dependencies": {
         "descore": ">=1.2.3",
         "des": ">=1.3.3",

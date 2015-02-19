@@ -1,13 +1,13 @@
-module des.engine.object;
+module sp.engine.object;
 
-import des.engine.base;
-import des.engine.attrib;
+import sp.engine.base;
+import sp.engine.attrib;
 
-import des.engine.material;
-import des.engine.shader;
+import sp.engine.material;
+import sp.engine.shader;
 
 ///
-class DrawObject : GLObject, SpaceNode
+class SPDrawObject : GLObject, SpaceNode
 {
     mixin DES;
     mixin SpaceNodeHelper;
@@ -21,7 +21,7 @@ protected:
     GLBuffer[string] attribs;
 
     ///
-    Material material;
+    SPMaterial material;
 
     ///
     DrawMode base_mode = DrawMode.TRIANGLES;
@@ -31,7 +31,7 @@ public:
     Signal!float idle;
 
     ///
-    this( in MeshData info, Material mat )
+    this( in SPMeshData info, SPMaterial mat )
     in { assert( mat !is null ); } body
     {
         prepareBuffers( info );
@@ -44,7 +44,7 @@ public:
     bool visible = true;
 
     ///
-    void draw( ObjectShader shader, Camera camera )
+    void draw( SPObjectShader shader, Camera camera )
     in
     {
         assert( shader !is null );
@@ -53,6 +53,8 @@ public:
     body
     {
         if( !visible ) return;
+
+        shader.setAttribs( vao.enabled );
 
         shader.setMaterial( material );
         shader.setTransform( camera.resolve(this), camera.projectMatrix );
@@ -81,7 +83,7 @@ protected:
     { super.drawElements( mode, indices.elementCount ); }
 
     /// creates buffers from `Attrib`s in `MeshData`
-    void prepareBuffers( in MeshData data )
+    void prepareBuffers( in SPMeshData data )
     {
         vertices = createBuffer( data.vertices );
 
@@ -90,13 +92,19 @@ protected:
 
         foreach( key, val; data.attribs )
         {
-            enforce( val.location >= 0, new GLObjException( "bad attrib '" ~ key ~ "' location" ) );
+            //enforce( val.location >= 0, new GLObjException( "bad attrib '" ~ key ~ "' location" ) );
 
             auto buf = createBuffer( val );
-            attribs[key] = buf;
 
-            logger.Debug( "attrib '%s': loc: %s, elem: %s, type: %s, stride: %s, offset: %s",
-                    key, val.location, val.elements, val.type, val.stride, val.offset );
+            if( buf !is null )
+            {
+                attribs[key] = buf;
+
+                logger.Debug( "attrib '%s': loc: %s, elem: %s, type: %s, stride: %s, offset: %s",
+                        key, val.location, val.elements, val.type, val.stride, val.offset );
+            }
+            else
+                logger.warn( "bad attrib '%s' location", key );
         }
 
         if( data.indices.length )
@@ -110,8 +118,10 @@ protected:
     }
 
     /// create buffer, set attrib pointer, set data if exists
-    GLBuffer createBuffer( in Attrib attr )
+    GLBuffer createBuffer( in SPDrawObjectAttrib attr )
     {
+        if( attr.location < 0 ) return null;
+
         auto buf = newEMM!GLBuffer;
         setAttribPointer( buf, attr.location, attr.elements,
                           attr.type, attr.stride, attr.offset );
