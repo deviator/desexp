@@ -5,18 +5,30 @@ import sp.engine.base;
 import sp.engine.light;
 import sp.engine.material;
 
+import des.util.helpers;
+
+import std.algorithm : canFind;
+
 auto getShaders( string[] path... )
 {
     import std.file;
-    import des.util.helpers;
     return parseGLShaderSource( readText( appPath( path ) ) );
 }
 
-class SPObjectShader : CommonGLShaderProgram
+interface SPObjectShader
+{
+    void setTransform( in mat4 tr, in mat4 prj );
+    void setLight( Camera camera, SPLight light );
+    void setMaterial( SPMaterial mat );
+    void checkAttribs( int[] enabled );
+    void setUp();
+}
+
+class SPMainShader : CommonGLShaderProgram, SPObjectShader
 {
     this()
     {
-        super( getShaders( "..", "data", "objshader.glsl" ) );
+        super( parseGLShaderSource( import( bnPath( "shaders", "sp_obj_shader.glsl" ) ) ) );
     }
 
     void setTransform( in mat4 tr, in mat4 prj )
@@ -28,12 +40,7 @@ class SPObjectShader : CommonGLShaderProgram
 
     void setLight( Camera camera, SPLight light )
     {
-        setUniform!int ( "light.type", light.type );
-        setUniform!vec3( "light.ambient", light.ambient );
-        setUniform!vec3( "light.diffuse", light.diffuse );
-        setUniform!vec3( "light.specular", light.specular );
-        setUniform!vec3( "light.attenuation", light.attenuation );
-        setUniform!vec3( "light.cspos", camera.resolve(light).offset );
+        setLightByName( "light", camera, light );
     }
 
     void setMaterial( SPMaterial mat )
@@ -45,7 +52,7 @@ class SPObjectShader : CommonGLShaderProgram
         setTxData( "material.normal", mat.normal );
     }
 
-    void setAttribs( int[] enabled )
+    void checkAttribs( int[] enabled )
     {
         auto list = [ "texcoord", "normal", "tangent" ];
 
@@ -55,6 +62,8 @@ class SPObjectShader : CommonGLShaderProgram
             setUniform!bool( "attrib_use." ~ a,
                     canFindAttrib( enabled, a ) );
     }
+
+    void setUp() { use(); }
 
 protected:
 
@@ -66,7 +75,6 @@ protected:
 
     bool canFindAttrib( int[] attribs, string name )
     {
-        import std.algorithm;
         return canFind( attribs, attribLocations[name] );
     }
 
@@ -80,4 +88,53 @@ protected:
             tx.bind();
         }
     }
+
+    void setLightByName( string name, Camera cam, SPLight ll )
+    {
+        setUniform!int ( name ~ ".type", ll.type );
+        setUniform!vec3( name ~ ".ambient", ll.ambient );
+        setUniform!vec3( name ~ ".diffuse", ll.diffuse );
+        setUniform!vec3( name ~ ".specular", ll.specular );
+        setUniform!vec3( name ~ ".attenuation", ll.attenuation );
+        setUniform!bool( name ~ ".use_shadow", ll.use_shadow );
+        setUniform!int ( name ~ ".shadow_map", ll.shadow_map.unit );
+        ll.shadow_map.bind();
+        auto crl = cam.resolve(ll);
+        setUniform!vec3( name ~ ".cspos", crl.offset );
+        auto bais = mat4( .5,  0,  0, .5, 
+                           0, .5,  0, .5, 
+                           0,  0, .5, .5, 
+                           0,  0,  0,  1 );
+        auto cam2light = ll.projectMatrix * crl.speedTransformInv;
+        setUniform!mat4( name ~ ".fragtr", bais * cam2light );
+        //setUniform!mat4( name ~ ".mtr", cam2light );
+    }
+}
+
+class SPLightShader : CommonGLShaderProgram, SPObjectShader
+{
+    this()
+    {
+        super( parseGLShaderSource( import( bnPath( "shaders", "sp_light_shader.glsl" ) ) ) );
+    }
+
+    void setTransform( in mat4 tr, in mat4 prj )
+    {
+        auto fprj = prj * tr;
+        setUniform!mat4( "fprj", fprj );
+    }
+
+    void setLight( Camera camera, SPLight light ) {}
+
+    void setMaterial( SPMaterial mat ) {}
+
+    void checkAttribs( int[] enabled )
+    { enforce( canFind( enabled, 0 ) ); }
+
+    void setUp() { use(); }
+
+protected:
+
+    override uint[string] attribLocations() @property
+    { return [ "vertex" : 0 ]; }
 }

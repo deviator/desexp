@@ -22,13 +22,24 @@ class TestScene : SPScene
 
     this( Camera cam )
     {
-        super( cam, newEMM!MoveLight( 10, 5, 0.2, vec3(1,0.05,0.025) ) );
+        super( cam, newEMM!MoveLight( 4, 4, 0.2, vec3(0.5,0.1,0.025) ) );
 
         loader = newEMM!SPLoader;
 
         prepareAbstractModel();
         prepareRoomModel();
         preparePlaneModel();
+    }
+
+    void newView()
+    {
+        fbo_view++;
+        fbo_view %= 3;
+    }
+
+    void changeMoveLight()
+    {
+        (cast(MoveLight)light).move = !(cast(MoveLight)light).move;
     }
 
 protected:
@@ -86,7 +97,8 @@ class MoveLight : SPLight
 {
     this( float Z, float R = 5, float S = 0.2, vec3 att = vec3(1,0.1,0.01) )
     {
-        offset = vec3( offset.xy, Z );
+        super( 4 );
+        ltr.pos.z = Z;
         radius = R;
         speed = S;
         attenuation = att;
@@ -98,11 +110,15 @@ class MoveLight : SPLight
 
     override void idle( float dt )
     {
+        super.idle( dt );
+        if( !move ) return;
         time += dt;
         import std.math;
         auto t = time * 2 * PI * speed;
-        offset = vec3( vec2( cos(t), sin(t) ) * radius, offset.z );
+        ltr.pos = vec3( vec2( cos(t), sin(t) ) * radius, offset.z );
     }
+
+    bool move = true;
 }
 
 class TestObject : SPDrawObject
@@ -131,6 +147,10 @@ public:
             auto o = vec3( 0,0, sin( time * 3 ) * 0.05 + 0.2 );
 
             self_mtr = quatAndPosToMatrix( q, o );
+
+            auto s = 1;
+
+            self_mtr = mat4.diag(s,s,s,1) * self_mtr;
         });
     }
 }

@@ -26,8 +26,8 @@ class SPTxData : DesObject
     {
         this.val = val;
         tex = newEMM!GLTexture( GLTexture.Target.T2D, tu );
-        tex.setParameter( GLTexture.Parameter.MIN_FILTER, GLTexture.Filter.NEAREST );
-        tex.setParameter( GLTexture.Parameter.MAG_FILTER, GLTexture.Filter.NEAREST );
+        tex.setMinFilter( GLTexture.Filter.NEAREST );
+        tex.setMagFilter( GLTexture.Filter.NEAREST );
     }
 
     ///

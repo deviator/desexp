@@ -28,6 +28,13 @@ protected:
         {
             if( ke.scan == ke.Scan.ESCAPE )
                 app.quit();
+            if( ke.pressed )
+            {
+                if( ke.scan == ke.Scan.N )
+                    scene.newView();
+                if( ke.scan == ke.Scan.L )
+                    scene.changeMoveLight();
+            }
         });
         connect( mouse, &(cam.mouseReaction) );
         connect( key, &(cam.keyReaction) );

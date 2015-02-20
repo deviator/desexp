@@ -54,7 +54,7 @@ public:
     {
         if( !visible ) return;
 
-        shader.setAttribs( vao.enabled );
+        shader.checkAttribs( vao.enabled );
 
         shader.setMaterial( material );
         shader.setTransform( camera.resolve(this), camera.projectMatrix );
