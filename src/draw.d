@@ -22,19 +22,13 @@ class TestScene : SPScene
 
     this( Camera cam )
     {
-        super( cam, newEMM!MoveLight( 4, 4, 0.2, vec3(0.5,0.1,0.025) ) );
+        super( cam, newEMM!MoveLight( 4, 5, 0.2, vec3(0.5,0.1,0.025) ) );
 
         loader = newEMM!SPLoader;
 
         prepareAbstractModel();
         prepareRoomModel();
         preparePlaneModel();
-    }
-
-    void newView()
-    {
-        fbo_view++;
-        fbo_view %= 3;
     }
 
     void changeMoveLight()

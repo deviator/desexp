@@ -73,6 +73,11 @@ protected:
                  "normal" : 2, "tangent" : 3 ];
     }
 
+    override uint[string] fragDataLocations() @property
+    {
+        return [ "color" : 0, "normal_map" : 1 ];
+    }
+
     bool canFindAttrib( int[] attribs, string name )
     {
         return canFind( attribs, attribLocations[name] );
@@ -107,7 +112,6 @@ protected:
                            0,  0,  0,  1 );
         auto cam2light = ll.projectMatrix * crl.speedTransformInv;
         setUniform!mat4( name ~ ".fragtr", bais * cam2light );
-        //setUniform!mat4( name ~ ".mtr", cam2light );
     }
 }
 

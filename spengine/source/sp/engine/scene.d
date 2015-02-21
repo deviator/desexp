@@ -19,6 +19,7 @@ class SPScene : DesObject
 
 protected:
 
+    ///
     SPRender render;
 
     ///
@@ -63,6 +64,32 @@ public:
     in{ assert( obj !is null ); } body
     { objs ~= registerChildEMM( obj ); }
 
+    void newView()
+    {
+        fbo_view++;
+        fbo_view %= 5;
+
+        switch( fbo_view )
+        {
+            case 0:
+                logger.info( "scene" );
+                break;
+            case 1:
+                logger.info( "render color" );
+                break;
+            case 2:
+                logger.info( "render depth" );
+                break;
+            case 3:
+                logger.info( "shadow map" );
+                break;
+            case 4:
+                logger.info( "render normal map" );
+                break;
+            default: break;
+        }
+    }
+
     ///
     void draw()
     {
@@ -70,15 +97,29 @@ public:
         drawObjects( light_shader, light );
         light.unbind();
 
-        render.start();
+        render.bind();
         drawObjects( obj_shader, camera );
-        render.finish();
+        render.unbind();
 
         switch( fbo_view )
         {
-            case 1: render.draw( render.depth ); break;
-            case 2: render.draw( light.shadow_map ); break;
-            default: render.draw(); break;
+            case 0:
+                drawObjects( obj_shader, camera );
+                break;
+            case 1:
+                render.draw();
+                break;
+            case 2:
+                render.draw( render.getDepth() );
+                break;
+            case 3:
+                render.draw( light.shadow_map );
+                break;
+            case 4:
+                render.draw( render.getColor(1) );
+                break;
+            default:
+                break;
         }
     }
 

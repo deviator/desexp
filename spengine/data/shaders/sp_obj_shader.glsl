@@ -91,8 +91,6 @@ uniform struct AttribUse
     bool tangent;
 } attrib_use;
 
-out vec4 color;
-
 float getShadow( sampler2D sm, vec4 crd, ivec2 offset )
 {
     return ( textureOffset( sm, crd.xy / crd.w, offset ).r < crd.z / crd.w - 0.005 ) ? 1.0 : 0.0;
@@ -135,7 +133,6 @@ vec3[3] calcLight( Light ll, vec3 pos, vec3 norm )
     if( ll.use_shadow )
     {
         vec4 smcoord = ll.fragtr * vec4( pos, 1 );
-        //lighted = textureProj( ll.shadow_map, smcoord ) * 0.8 + 0.2;
         visible = 1 - getSmoothShadow( ll.shadow_map, smcoord ) * 0.8;
     }
 
@@ -158,6 +155,9 @@ vec3[3] calcLight( Light ll, vec3 pos, vec3 norm )
 
     return ret;
 }
+
+out vec4 color;
+out vec4 normal_map;
 
 void main()
 {
@@ -197,4 +197,6 @@ void main()
     color = vec4( lr[0], 1.0 ) +
             vec4( lr[1], 1.0 ) * getValue( material.diffuse, uv, nutc ) +
             vec4( lr[2], 1.0 ) * getValue( material.specular, uv, nutc );
+
+    normal_map = vec4( normal, 1 );
 }
