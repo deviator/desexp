@@ -55,8 +55,11 @@ public:
         tm = new Timer;
 
         render = newEMM!SPRender;
+        render.cam = camera;
 
         glEnable(GL_DEPTH_TEST);
+
+        setDrawFuncs();
     }
 
     ///
@@ -66,28 +69,9 @@ public:
 
     void newView()
     {
-        fbo_view++;
-        fbo_view %= 5;
-
-        switch( fbo_view )
-        {
-            case 0:
-                logger.info( "scene" );
-                break;
-            case 1:
-                logger.info( "render color" );
-                break;
-            case 2:
-                logger.info( "render depth" );
-                break;
-            case 3:
-                logger.info( "shadow map" );
-                break;
-            case 4:
-                logger.info( "render normal map" );
-                break;
-            default: break;
-        }
+        dfNO++;
+        dfNO %= listDF.length;
+        logger.info( listDF[dfNO].name );
     }
 
     ///
@@ -101,29 +85,8 @@ public:
         drawObjects( obj_shader, camera );
         render.unbind();
 
-        switch( fbo_view )
-        {
-            case 0:
-                drawObjects( obj_shader, camera );
-                break;
-            case 1:
-                render.draw();
-                break;
-            case 2:
-                render.draw( render.getDepth() );
-                break;
-            case 3:
-                render.draw( light.shadow_map );
-                break;
-            case 4:
-                render.draw( render.getColor(1) );
-                break;
-            default:
-                break;
-        }
+        listDF[dfNO].func();
     }
-
-    uint fbo_view = 0;
 
     ///
     void idle()
@@ -134,6 +97,33 @@ public:
     }
 
 protected:
+
+    class DrawFunc
+    {
+        string name;
+        void delegate() func;
+        this( string name, void delegate() func )
+        in{ assert( func !is null ); } body
+        { this.name = name, this.func = func; }
+    }
+
+    DrawFunc[] listDF;
+    uint dfNO = 0;
+
+    void setDrawFuncs()
+    {
+        addDF( "clear draw", { drawObjects( obj_shader, camera ); } );
+        addDF( "fbo depth", { render.draw( render.getDepth() ); } );
+        addDF( "fbo simple", { render.draw( render.getColor(0) ); } );
+        addDF( "fbo diffuse", { render.draw( render.getColor(1) ); } );
+        addDF( "fbo normal", { render.draw( render.getColor(2) ); } );
+        addDF( "fbo specular", { render.draw( render.getColor(3) ); } );
+        addDF( "light shadow map", { render.draw( light.shadow_map ); } );
+        addDF( "fbo result", { render.draw(); } );
+    }
+
+    void addDF( string name, void delegate() func )
+    { listDF ~= new DrawFunc( name, func ); }
 
     void drawObjects( SPObjectShader shader, Camera cam )
     {

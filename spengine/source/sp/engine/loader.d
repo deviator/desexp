@@ -108,7 +108,6 @@ public:
         /// A postprocessing step to reduce the number of meshes.
         OptimizeMeshes = aiProcess_OptimizeMeshes,
         
-        
         /// A postprocessing step to optimize the scene hierarchy. 
         OptimizeGraph = aiProcess_OptimizeGraph,
         

@@ -15,12 +15,14 @@ class SPRender : GLRender
     this()
     {
         super();
-        setDepth( defaultDepth( 5 ) );
-        setColor( defaultColor( 6 ), 0 );
-        setColor( defaultColor( 7 ), 1 );
+        setDepth( defaultDepth( 0 ) );
+        setColor( defaultColor( 1 ), 0 ); // color
+        setColor( defaultColor( 2 ), 1 ); // diffuse
+        setColor( defaultColor( 3 ), 2 ); // normal
+        setColor( defaultColor( 4 ), 3 ); // specular
+        fbo.drawBuffers( 0, 1, 2, 3 );
 
-        resize( uivec2( 800, 600 ) );
-        fbo.drawBuffers( 0, 1 );
+        resize( uivec2( 1600, 1200 ) );
 
         enum sp = bnPath( "shaders", "sp_fbo_shader.glsl" );
         auto ss = parseGLShaderSource( import(sp) );
@@ -37,14 +39,32 @@ class SPRender : GLRender
         checkGLCall!glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
     }
 
+    Camera cam;
+
     ///
     void draw( GLTexture tex = null )
     {
         shader.use();
-        if( tex is null ) tex = getColor(0);
-        tex.bind();
-        shader.setUniform!int( "tex", tex.unit );
+        bool simple = tex !is null;
+        shader.setUniform!bool( "simple", simple );
+        if( simple ) setTexture( "tex", tex );
+        else
+        {
+            //shader.setUniform!mat4( "p2cs", cam.projectMatrix.inv );
+            setTexture( "depth", getDepth() );
+            setTexture( "diffuse", getColor(1) );
+            setTexture( "normal", getColor(2) );
+            setTexture( "specular", getColor(3) );
+        }
         screen.draw();
+    }
+
+protected:
+
+    void setTexture( string name, GLTexture tex )
+    {
+        tex.bind();
+        shader.setUniform!int( name, tex.unit );
     }
 }
 

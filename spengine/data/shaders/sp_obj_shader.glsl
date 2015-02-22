@@ -157,7 +157,10 @@ vec3[3] calcLight( Light ll, vec3 pos, vec3 norm )
 }
 
 out vec4 color;
+
+out vec4 diffuse_map;
 out vec4 normal_map;
+out vec4 specular_map;
 
 void main()
 {
@@ -194,9 +197,12 @@ void main()
 
     vec3[3] lr = calcLight( light, vert.pos, normal );
 
-    color = vec4( lr[0], 1.0 ) +
-            vec4( lr[1], 1.0 ) * getValue( material.diffuse, uv, nutc ) +
-            vec4( lr[2], 1.0 ) * getValue( material.specular, uv, nutc );
+    diffuse_map = getValue( material.diffuse, uv, nutc );
+    specular_map = getValue( material.specular, uv, nutc );
 
-    normal_map = vec4( normal, 1 );
+    color = vec4( lr[0], 1.0 ) +
+            vec4( lr[1], 1.0 ) * diffuse_map;
+            vec4( lr[2], 1.0 ) * specular_map;
+
+    normal_map = vec4( normal * .5 + .5, 1 );
 }
