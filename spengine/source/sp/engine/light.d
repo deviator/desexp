@@ -18,14 +18,12 @@ class SPLight : DesObject, Camera
 
     bool use_shadow = true;
 
-    GLTexture shadow_map;
     GLRender render;
 
     this( uint smtu )
     {
         render = newEMM!GLRender;
-        shadow_map = render.defaultDepth( smtu );
-        render.setDepth( shadow_map );
+        render.setDepth( render.defaultDepth( smtu ) );
         render.resize( 800, 800 );
 
         ltr = new LookAtTransform;
@@ -44,6 +42,9 @@ class SPLight : DesObject, Camera
     }
 
     void idle( float dt ) {}
+
+    GLTexture shadowMap() @property
+    { return render.getDepth(); }
 
     void bind()
     {

@@ -1,6 +1,7 @@
 module sp.engine.render;
 
 import sp.engine.base;
+import sp.engine.light;
 
 import des.util.helpers;
 
@@ -8,19 +9,38 @@ class SPRender : GLRender
 {
     mixin DES;
 
-    CommonGLShaderProgram shader;
+protected:
 
+    CommonGLShaderProgram shader;
     SPScreenPlane screen;
 
-    this()
+    uint[string] named_colors;
+
+    void setNamedColor( string name, GLTexture tx, uint N )
+    {
+        setColor( tx, N );
+        named_colors[name] = N;
+    }
+
+public:
+
+    this( uint[string] frag_info )
     {
         super();
-        setDepth( defaultDepth( 0 ) );
-        setColor( defaultColor( 1 ), 0 ); // color
-        setColor( defaultColor( 2 ), 1 ); // diffuse
-        setColor( defaultColor( 3 ), 2 ); // normal
-        setColor( defaultColor( 4 ), 3 ); // specular
-        fbo.drawBuffers( 0, 1, 2, 3 );
+        uint tu = 0;
+        setDepth( defaultDepth( tu++ ) );
+
+        int[] draw_bufs;
+
+        foreach( key, val; frag_info )
+        {
+            setNamedColor( key, defaultColor(tu), val );
+            logger.Debug( "set color '%s' at unit %d as COLOR%d", key, tu, val );
+            tu++;
+            draw_bufs ~= val;
+        }
+
+        fbo.drawBuffers( draw_bufs.sort );
 
         resize( uivec2( 1600, 1200 ) );
 
@@ -40,31 +60,47 @@ class SPRender : GLRender
     }
 
     Camera cam;
+    SPLight light;
 
     ///
     void draw( GLTexture tex = null )
     {
         shader.use();
+        setLightByName( "light", cam, light );
+        auto p2cs = cam.projectMatrix.inv;
+        shader.setUniform!mat4( "p2cs", p2cs );
+        shader.setTexture( "depth", getDepth() );
+
+        foreach( name, N; named_colors )
+            shader.setTexture( name, getColor(N) );
+
         bool simple = tex !is null;
         shader.setUniform!bool( "simple", simple );
-        if( simple ) setTexture( "tex", tex );
-        else
-        {
-            //shader.setUniform!mat4( "p2cs", cam.projectMatrix.inv );
-            setTexture( "depth", getDepth() );
-            setTexture( "diffuse", getColor(1) );
-            setTexture( "normal", getColor(2) );
-            setTexture( "specular", getColor(3) );
-        }
+        if( simple )
+            shader.setTexture( "tex", tex );
+
         screen.draw();
     }
 
 protected:
 
-    void setTexture( string name, GLTexture tex )
+    void setLightByName( string name, Camera cam, SPLight ll )
     {
-        tex.bind();
-        shader.setUniform!int( name, tex.unit );
+        shader.setUniform!int ( name ~ ".type", ll.type );
+        shader.setUniform!vec3( name ~ ".ambient", ll.ambient );
+        shader.setUniform!vec3( name ~ ".diffuse", ll.diffuse );
+        shader.setUniform!vec3( name ~ ".specular", ll.specular );
+        shader.setUniform!vec3( name ~ ".attenuation", ll.attenuation );
+        shader.setUniform!bool( name ~ ".use_shadow", ll.use_shadow );
+        shader.setTexture( name ~ ".shadow_map", ll.shadowMap );
+        auto crl = cam.resolve(ll);
+        shader.setUniform!vec3( name ~ ".cspos", crl.offset );
+        auto bais = mat4( .5,  0,  0, .5, 
+                           0, .5,  0, .5, 
+                           0,  0, .5, .5, 
+                           0,  0,  0,  1 );
+        auto cam2light = ll.projectMatrix * crl.speedTransformInv;
+        shader.setUniform!mat4( name ~ ".fragtr", bais * cam2light );
     }
 }
 

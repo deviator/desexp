@@ -9,6 +9,7 @@ import sp.engine.base;
 import sp.engine.material;
 import sp.engine.object;
 import sp.engine.light;
+import sp.engine.loader;
 import sp.engine.shader;
 import sp.engine.render;
 
@@ -37,6 +38,75 @@ protected:
     ///
     Timer tm;
 
+    const @property
+    {
+        ///
+        SPAttrib defaultVertexAttrib()
+        { return SPAttrib( "vertex", 0, 3 ); }
+
+        ///
+        SPAttrib defaultTCoordAttrib()
+        { return SPAttrib( "tcoord", 1, 2 ); }
+
+        ///
+        SPAttrib defaultNormalAttrib()
+        { return SPAttrib( "normal", 2, 3 ); }
+
+        ///
+        SPAttrib defaultTangentAttrib()
+        { return SPAttrib( "tangent", 3, 3 ); }
+
+        ///
+        SPAttrib[] defaultAttribs()
+        {
+            return [
+                defaultVertexAttrib,
+                defaultTCoordAttrib,
+                defaultNormalAttrib,
+                defaultTangentAttrib
+                ];
+        }
+    }
+
+    SPMeshData convMesh( in SPLoader.Mesh lm )
+    {
+        SPMeshData md;
+
+        md.num_vertices = cast(uint)( lm.vertices.length );
+
+        md.indices = lm.indices.dup;
+
+        enforce( lm.vertices !is null );
+
+        md.attribs ~= [
+                defaultVertexAttrib, // 0
+                defaultTCoordAttrib, // 1
+                defaultNormalAttrib, // 2
+                defaultTangentAttrib // 3
+                ];
+
+        float[] texcoords;
+
+        if( lm.texcoords.length )
+        {
+            enforce( lm.texcoords[0].comp == 2 );
+            enforce( lm.texcoords[0].data !is null );
+            texcoords = lm.texcoords[0].data.dup;
+        }
+
+        md.buffers ~= SPMeshData.Buffer( lm.vertices.dup, [0] ); // md.attribs[0]
+
+        if( texcoords )
+            md.buffers ~= SPMeshData.Buffer( texcoords, [1] );   // md.attribs[1]
+
+        md.buffers ~= SPMeshData.Buffer( lm.normals.dup, [2] );  // md.attribs[2]
+
+        if( lm.tangents )
+            md.buffers ~= SPMeshData.Buffer( lm.tangents.dup, [3] ); // md.attribs[3]
+
+        return md;
+    }
+
 public:
 
     ///
@@ -48,14 +118,26 @@ public:
     this( Camera camera, SPLight light )
     in{ assert( camera !is null ); } body
     {
+        uint[string] frag_info = [
+                     "color"        : 0,
+                     "diffuse_map"  : 1,
+                     "normal_map"   : 2,
+                     "specular_map" : 3,
+                     "position_map" : 4 ];
+
         this.camera = camera;
         this.light = light is null ? newEMM!SPLight(4) : light;
-        obj_shader = newEMM!SPMainShader;
+
+        int dvl = defaultVertexAttrib.location;
+
+        obj_shader = newEMM!SPMainShader( dvl, defaultAttribs, frag_info );
         light_shader = newEMM!SPLightShader;
+
         tm = new Timer;
 
-        render = newEMM!SPRender;
+        render = newEMM!SPRender( frag_info );
         render.cam = camera;
+        render.light = light;
 
         glEnable(GL_DEPTH_TEST);
 
@@ -96,7 +178,28 @@ public:
         foreach( obj; objs ) obj.idle( dt );
     }
 
+    ///
+    void resize( uivec2 sz ) { render.resize( sz ); }
+
+    ///
+    void resize(T)( Vector!(2,T) sz )
+    if( isIntegral!T )
+    in
+    {
+        assert( sz.x > 0 );
+        assert( sz.y > 0 );
+    }
+    body { resize( uivec2( sz ) ); }
+
 protected:
+
+    void drawObjects( SPObjectShader shader, Camera cam )
+    {
+        shader.setUp();
+        shader.setLight( cam, light );
+        foreach( obj; objs )
+            obj.draw( shader, cam );
+    }
 
     class DrawFunc
     {
@@ -113,23 +216,15 @@ protected:
     void setDrawFuncs()
     {
         addDF( "clear draw", { drawObjects( obj_shader, camera ); } );
-        addDF( "fbo depth", { render.draw( render.getDepth() ); } );
-        addDF( "fbo simple", { render.draw( render.getColor(0) ); } );
-        addDF( "fbo diffuse", { render.draw( render.getColor(1) ); } );
-        addDF( "fbo normal", { render.draw( render.getColor(2) ); } );
-        addDF( "fbo specular", { render.draw( render.getColor(3) ); } );
-        addDF( "light shadow map", { render.draw( light.shadow_map ); } );
+        //addDF( "fbo depth", { render.draw( render.getDepth() ); } );
+        //addDF( "fbo simple", { render.draw( render.getColor(0) ); } );
+        //addDF( "fbo diffuse", { render.draw( render.getColor(1) ); } );
+        //addDF( "fbo normal", { render.draw( render.getColor(2) ); } );
+        //addDF( "fbo specular", { render.draw( render.getColor(3) ); } );
+        //addDF( "light shadow map", { render.draw( light.shadowMap ); } );
         addDF( "fbo result", { render.draw(); } );
     }
 
     void addDF( string name, void delegate() func )
     { listDF ~= new DrawFunc( name, func ); }
-
-    void drawObjects( SPObjectShader shader, Camera cam )
-    {
-        shader.setUp();
-        shader.setLight( cam, light );
-        foreach( obj; objs )
-            obj.draw( shader, cam );
-    }
 }

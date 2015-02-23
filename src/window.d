@@ -21,6 +21,7 @@ protected:
     override void prepare()
     {
         cam = new MouseControlCamera;
+        cam.fov = 90;
 
         scene = newEMM!TestScene( cam );
 
@@ -38,9 +39,19 @@ protected:
         });
         connect( mouse, &(cam.mouseReaction) );
         connect( key, &(cam.keyReaction) );
-        connect( event.resized, (ivec2 sz){ cam.ratio = sz.w / cast(float)sz.h; });
+        connect( event.resized, (ivec2 sz)
+        {
+            cam.ratio = sz.w / cast(float)sz.h;
+            scene.resize( sz );
+        });
 
-        connect( draw, &(scene.draw) );
+        //connect( draw, &(scene.draw) );
+        connect( draw,
+        {
+            scene.draw();
+            //logger.fatal( "forced quit" );
+            //app.quit();
+        });
         connect( idle, &(scene.idle) );
     }
 

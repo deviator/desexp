@@ -4,6 +4,7 @@ import sp.engine.base;
 
 import sp.engine.light;
 import sp.engine.material;
+import sp.engine.attrib;
 
 import des.util.helpers;
 
@@ -26,8 +27,28 @@ interface SPObjectShader
 
 class SPMainShader : CommonGLShaderProgram, SPObjectShader
 {
-    this()
+protected:
+    int vert_loc;
+
+    uint[string] attribs;
+    uint[string] fragdata;
+
+    uint[string] convInfo( in SPAttrib[] list )
     {
+        uint[string] ret;
+        foreach( e; list )
+            ret[e.name] = e.location;
+        return ret;
+    }
+
+public:
+
+    this( int vloc, in SPAttrib[] attr_info, uint[string] fragdata )
+    {
+        this.vert_loc = vloc;
+        this.attribs = convInfo( attr_info );
+        this.fragdata = fragdata;
+
         super( parseGLShaderSource( import( bnPath( "shaders", "sp_obj_shader.glsl" ) ) ) );
     }
 
@@ -54,13 +75,14 @@ class SPMainShader : CommonGLShaderProgram, SPObjectShader
 
     void checkAttribs( int[] enabled )
     {
-        auto list = [ "texcoord", "normal", "tangent" ];
+        enforce( canFind( enabled, vert_loc ) );
 
-        enforce( canFindAttrib( enabled, "vertex" ) );
-
-        foreach( a; list )
-            setUniform!bool( "attrib_use." ~ a,
-                    canFindAttrib( enabled, a ) );
+        foreach( name, loc; attribs )
+        {
+            auto n = "attrib_use." ~ name;
+            auto l = getUniformLocation( n );
+            if( l >= 0 ) setUniform!bool( n, canFind( enabled, loc ) );
+        }
     }
 
     void setUp() { use(); }
@@ -68,30 +90,17 @@ class SPMainShader : CommonGLShaderProgram, SPObjectShader
 protected:
 
     override uint[string] attribLocations() @property
-    {
-        return [ "vertex" : 0, "texcoord" : 1,
-                 "normal" : 2, "tangent" : 3 ];
-    }
+    { return attribs; }
 
     override uint[string] fragDataLocations() @property
-    {
-        return [ "color" : 0, "normal_map" : 1 ];
-    }
-
-    bool canFindAttrib( int[] attribs, string name )
-    {
-        return canFind( attribs, attribLocations[name] );
-    }
+    { return fragdata; }
 
     void setTxData( string name, SPTxData tx )
     {
         setUniform!bool( name ~ ".use_tex", tx.use_tex );
         setUniform!vec4( name ~ ".val", tx.val );
         if( tx.use_tex )
-        {
-            setUniform!int( name ~ ".tex", tx.tex.unit );
-            tx.bind();
-        }
+            setTexture( name ~ ".tex", tx.tex );
     }
 
     void setLightByName( string name, Camera cam, SPLight ll )
@@ -102,13 +111,12 @@ protected:
         setUniform!vec3( name ~ ".specular", ll.specular );
         setUniform!vec3( name ~ ".attenuation", ll.attenuation );
         setUniform!bool( name ~ ".use_shadow", ll.use_shadow );
-        setUniform!int ( name ~ ".shadow_map", ll.shadow_map.unit );
-        ll.shadow_map.bind();
+        setTexture( name ~ ".shadow_map", ll.shadowMap );
         auto crl = cam.resolve(ll);
         setUniform!vec3( name ~ ".cspos", crl.offset );
-        auto bais = mat4( .5,  0,  0, .5, 
-                           0, .5,  0, .5, 
-                           0,  0, .5, .5, 
+        auto bais = mat4( .5,  0,  0, .5,
+                           0, .5,  0, .5,
+                           0,  0, .5, .5,
                            0,  0,  0,  1 );
         auto cam2light = ll.projectMatrix * crl.speedTransformInv;
         setUniform!mat4( name ~ ".fragtr", bais * cam2light );

@@ -2,7 +2,7 @@
 #version 330
 
 in vec3 vertex;
-in vec2 texcoord;
+in vec2 tcoord;
 in vec3 normal;
 in vec3 tangent;
 
@@ -23,7 +23,7 @@ vec3 tr( mat4 mtr, vec3 v, float point )
 void main()
 {
     gl_Position = fprj * vec4( vertex, 1.0 );
-    vert.uv = texcoord;
+    vert.uv = tcoord;
     vert.pos  = tr( cspace, vertex, 1.0 );
     vert.norm = tr( cspace, normal, 0.0 );
     vert.tang = tr( cspace, tangent, 0.0 );
@@ -86,7 +86,7 @@ mat3 tangentSpace()
 
 uniform struct AttribUse
 {
-    bool texcoord;
+    bool tcoord;
     bool normal;
     bool tangent;
 } attrib_use;
@@ -144,6 +144,7 @@ vec3[3] calcLight( Light ll, vec3 pos, vec3 norm )
 
     ret[0] = ll.ambient;
     ret[1] = ll.diffuse * nxdir * atten * visible;
+    ret[2] = ll.specular;
 
     if( nxdir != 0.0 )
     {
@@ -152,6 +153,7 @@ vec3[3] calcLight( Light ll, vec3 pos, vec3 norm )
         float nxhalf = max( 0.0, dot( norm, hv ) );
         ret[2] = ll.specular * pow( nxhalf, 2 ) * atten * visible;
     }
+    else ret[2] = vec3(0);
 
     return ret;
 }
@@ -161,6 +163,7 @@ out vec4 color;
 out vec4 diffuse_map;
 out vec4 normal_map;
 out vec4 specular_map;
+out vec4 position_map;
 
 void main()
 {
@@ -168,7 +171,7 @@ void main()
     bool nutc = false;
     bool nutt = false;
 
-    if( !attrib_use.texcoord )
+    if( !attrib_use.tcoord )
     {
         nutc = true;
         nutt = true;
@@ -203,6 +206,8 @@ void main()
     color = vec4( lr[0], 1.0 ) +
             vec4( lr[1], 1.0 ) * diffuse_map;
             vec4( lr[2], 1.0 ) * specular_map;
+
+    position_map = vec4( vert.pos, gl_FragDepth );
 
     normal_map = vec4( normal * .5 + .5, 1 );
 }

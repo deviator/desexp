@@ -3,8 +3,11 @@ module sp.engine.attrib;
 import des.gl.base.type;
 
 ///
-struct SPDrawObjectAttrib
+struct SPAttrib
 {
+    ///
+    string name;
+
     /// by default invalid value < 0
     int location = -1;
     ///
@@ -12,33 +15,28 @@ struct SPDrawObjectAttrib
     ///
     GLType type;
     ///
-    size_t stride = 0;
+    size_t stride;
     ///
-    size_t offset = 0;
-    ///
-    void[] data;
+    size_t offset;
 
+pure:
     ///
-    this(T)( int location, uint elements,
-            GLType type, T[] data=null )
+    this( string name, int location, uint elements,
+          GLType type=GLType.FLOAT,
+          size_t stride=0, size_t offset=0 )
     {
-        this.location = location;
-        this.elements = elements;
-        this.type     = type;
-        this.data     = cast(void[])data;
-    }
-
-    ///
-    this(T)( int location, uint elements,
-            GLType type, size_t stride,
-            size_t offset, T[] data=null )
-    {
+        this.name     = name;
         this.location = location;
         this.elements = elements;
         this.type     = type;
         this.stride   = stride;
         this.offset   = offset;
-        this.data     = cast(void[])data;
+    }
+
+    size_t dataSize() const @property
+    {
+        if( stride ) return stride;
+        return elements * sizeofGLType( type );
     }
 }
 
@@ -46,9 +44,23 @@ struct SPDrawObjectAttrib
 struct SPMeshData
 {
     ///
-    SPDrawObjectAttrib vertices;
+    uint num_vertices;
+
     ///
     uint[] indices;
+
     ///
-    SPDrawObjectAttrib[string] attribs;
+    SPAttrib[] attribs;
+
+    ///
+    static struct Buffer
+    {
+        ///
+        void[] data;
+        /// numbers of attributes in `SPMeshData.attribs` array
+        uint[] attribs;
+    }
+
+    ///
+    Buffer[] buffers;
 }

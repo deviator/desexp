@@ -38,7 +38,6 @@ public:
         {
             if( modkey ) zoom( ev.whe.y );
             else moveFront( -ev.whe.y * 0.1 );
-
         }
 
         if( ev.type == ev.Type.MOTION )

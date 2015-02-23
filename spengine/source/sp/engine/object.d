@@ -11,32 +11,31 @@ class SPDrawObject : GLObject, SpaceNode
 {
     mixin DES;
     mixin SpaceNodeHelper;
-    
+
 protected:
 
-    ///
-    GLBuffer vertices, indices;
+    uint num_vertices;
 
     ///
-    GLBuffer[string] attribs;
+    GLBuffer indices;
+
+    ///
+    GLBuffer[] buffers;
 
     ///
     SPMaterial material;
-
-    ///
-    DrawMode base_mode = DrawMode.TRIANGLES;
 
 public:
 
     Signal!float idle;
 
     ///
-    this( in SPMeshData info, SPMaterial mat )
+    this( in SPMeshData md, SPMaterial mat )
     in { assert( mat !is null ); } body
     {
-        prepareBuffers( info );
+        prepareMesh( md );
 
-        material = registerChildEMM( mat );
+        material = registerChildEMM( mat, true );
         connect( idle, &(material.idle.opCall) );
     }
 
@@ -61,51 +60,32 @@ public:
 
         checkGLCall!glEnable( GL_DEPTH_TEST );
 
-        if( indices is null )
-            drawArrays( base_mode );
-        else
-            drawElements( base_mode );
+        if( indices is null ) drawArrays();
+        else drawElements();
     }
 
-    void setTransform( in mat4 m )
-    { self_mtr = m; }
+    ///
+    DrawMode mode = DrawMode.TRIANGLES;
+
+    ///
+    void setTransform( in mat4 m ) { self_mtr = m; }
 
 protected:
 
     override void preDraw() { if( indices !is null ) indices.bind(); }
 
     ///
-    void drawArrays( DrawMode mode )
-    { super.drawArrays( mode, vertices.elementCount ); }
+    void drawArrays()
+    { super.drawArrays( mode, num_vertices ); }
 
     ///
-    void drawElements( DrawMode mode )
+    void drawElements()
     { super.drawElements( mode, indices.elementCount ); }
 
-    /// creates buffers from `Attrib`s in `MeshData`
-    void prepareBuffers( in SPMeshData data )
+    /// creates buffers, set vertices count, etc
+    void prepareMesh( in SPMeshData data )
     {
-        vertices = createBuffer( data.vertices );
-
-        enforce( vertices !is null && vertices.elementCount,
-                new GLObjException( "vertices must have data" ) );
-
-        foreach( key, val; data.attribs )
-        {
-            //enforce( val.location >= 0, new GLObjException( "bad attrib '" ~ key ~ "' location" ) );
-
-            auto buf = createBuffer( val );
-
-            if( buf !is null )
-            {
-                attribs[key] = buf;
-
-                logger.Debug( "attrib '%s': loc: %s, elem: %s, type: %s, stride: %s, offset: %s",
-                        key, val.location, val.elements, val.type, val.stride, val.offset );
-            }
-            else
-                logger.warn( "bad attrib '%s' location", key );
-        }
+        num_vertices = data.num_vertices;
 
         if( data.indices.length )
         {
@@ -115,17 +95,39 @@ protected:
             import std.algorithm;
             logger.Debug( "indices max: ", reduce!max( data.indices ) );
         }
+
+        foreach( bufdata; data.buffers )
+            if( auto buf = createBuffer( bufdata, data.attribs ) )
+                buffers ~= buf;
     }
 
     /// create buffer, set attrib pointer, set data if exists
-    GLBuffer createBuffer( in SPDrawObjectAttrib attr )
+    GLBuffer createBuffer( in SPMeshData.Buffer bd, in SPAttrib[] attrlist )
     {
-        if( attr.location < 0 ) return null;
+        if( bd.data is null )
+        {
+            logger.warn( "buffer is defined, but has no data" );
+            return null;
+        }
+
+        if( bd.attribs is null )
+        {
+            logger.warn( "buffer is defined, but has no attribs" );
+            return null;
+        }
 
         auto buf = newEMM!GLBuffer;
-        setAttribPointer( buf, attr.location, attr.elements,
-                          attr.type, attr.stride, attr.offset );
-        if( attr.data ) buf.setUntypedData( attr.data, float.sizeof * attr.elements );
+        buf.setUntypedData( bd.data, attrlist[bd.attribs[0]].dataSize,
+                            GLBuffer.Usage.STATIC_DRAW );
+
+        foreach( attr_no; bd.attribs )
+        {
+            auto attr = attrlist[attr_no];
+            setAttribPointer( buf, attr.location, attr.elements,
+                              attr.type, attr.stride, attr.offset );
+            logger.Debug( "set attrib '%s' at loc '%d'", attr.name, attr.location );
+        }
+
         return buf;
     }
 }

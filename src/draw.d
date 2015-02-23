@@ -18,8 +18,10 @@ import des.util.stdext.algorithm;
 
 class TestScene : SPScene
 {
+protected:
     SPLoader loader;
 
+public:
     this( Camera cam )
     {
         super( cam, newEMM!MoveLight( 4, 5, 0.2, vec3(0.5,0.1,0.025) ) );
@@ -45,7 +47,7 @@ protected:
         auto mat = newEMM!SPMaterial();
         mat.diffuse.image( imLoad( appPath( "..", "data", "abstract_model_color.png" ) ) );
 
-        addObject( new TestObject( loader.getMeshData(0), mat ) );
+        addObject( new TestObject( convMesh( loader.getMesh(0) ), mat ) );
     }
 
     void prepareRoomModel()
@@ -56,23 +58,23 @@ protected:
         mat.diffuse.image( imLoad( appPath( "..", "data", "masonry-wall-texture.jpg" ) ) );
         mat.normal.image( imLoad( appPath( "..", "data", "masonry-wall-normal-map.jpg" ) ) );
 
-        auto o = new SPDrawObject( loader.getMeshData(0), mat );
+        auto o = new SPDrawObject( convMesh( loader.getMesh(0) ), mat );
         o.offset = vec3(0,0,-2);
         addObject( o );
     }
 
     void preparePlaneModel()
     {
-        SPMeshData md;
+        SPLoader.Mesh mesh;
 
-        md.vertices = SPDrawObjectAttrib( 0, 3, GLType.FLOAT, [vec3(1,1,0),vec3(1,-1,0),vec3(-1,-1,0),vec3(-1,1,0)] );
-        md.indices = [ 0, 1, 3, 1, 2, 3 ];
+        mesh.indices = [ 0, 1, 3, 1, 2, 3 ];
+        mesh.vertices = [vec3(1,1,0),vec3(1,-1,0),vec3(-1,-1,0),vec3(-1,1,0)];
         auto tex_repeat = 10;
-        md.attribs["texcoords"] = SPDrawObjectAttrib( 1, 2, GLType.FLOAT, amap!(a=>a*tex_repeat)( [vec2(1,1),vec2(1,0),vec2(0,0),vec2(0,1)] ) );
+        mesh.texcoords ~= SPLoader.TexCoord( 2, cast(float[])( amap!(a=>a*tex_repeat)( [vec2(1,1),vec2(1,0),vec2(0,0),vec2(0,1)] ) ) );
         auto x = vec3(1,0,0);
         auto z = vec3(0,0,1);
-        md.attribs["normals"] = SPDrawObjectAttrib( 2, 3, GLType.FLOAT, [z,z,z,z] );
-        md.attribs["tangents"] = SPDrawObjectAttrib( 3, 3, GLType.FLOAT, [x,x,x,x] );
+        mesh.normals = [z,z,z,z];
+        mesh.tangents = [x,x,x,x];
 
         auto mat = newEMM!SPMaterial();
         mat.diffuse.image( imLoad( appPath( "..", "data", "masonry-wall-texture.jpg" ) ) );
@@ -81,7 +83,7 @@ protected:
         mat.normal.image( imLoad( appPath( "..", "data", "masonry-wall-normal-map.jpg" ) ) );
         mat.specular.val = vec4(vec3(0.2),1);
 
-        auto o = new SPDrawObject( md, mat );
+        auto o = new SPDrawObject( convMesh( mesh ), mat );
         o.setTransform( mat4.diag(tex_repeat*1.5).setCol(3,vec4(0,0,-1.5,1)) );
         addObject( o );
     }
