@@ -18,7 +18,7 @@ in vec2 uv;
 
 uniform bool simple;
 
-uniform mat4 p2cs; // projection to camera space
+uniform mat4 p2cs; // transform to camera space
 uniform sampler2D depth;
 
 uniform sampler2D tex;
@@ -26,7 +26,6 @@ uniform sampler2D color;
 uniform sampler2D diffuse_map;
 uniform sampler2D normal_map;
 uniform sampler2D specular_map;
-uniform sampler2D position_map;
 
 uniform struct Light
 {
@@ -82,7 +81,7 @@ vec3[3] calcLight( Light ll, vec3 pos, vec3 norm )
     if( ll.use_shadow )
     {
         vec4 smcoord = ll.fragtr * vec4( pos, 1 );
-        visible = 1 - getSmoothShadow( ll.shadow_map, smcoord ) * 0.8;
+        visible = 1.0f - getSmoothShadow( ll.shadow_map, smcoord ) * 0.8;
     }
 
     float atten = 1.0f / ( ll.attenuation.x +
@@ -114,7 +113,6 @@ void main()
     {
         vec4 un_pos = p2cs * vec4( uv*2-1, (texture(depth,uv).r*2-1), 1 );
         vec3 pos = un_pos.xyz / un_pos.w;
-        vec3 pp0 = texture( position_map, uv ).xyz;
 
         vec3 norm = normalize( texture( normal_map, uv ).xyz * 2 - 1 );
 
@@ -123,8 +121,5 @@ void main()
         result = vec4( lr[0], 1.0 ) +
                  vec4( lr[1], 1.0 ) * texture( diffuse_map, uv ) +
                  vec4( lr[2], 1.0 ) * texture( specular_map, uv );
-
-        result *= 0.1;
-        result += vec4( pos - pp0, 1 ) * 0.1;
     }
 }

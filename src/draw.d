@@ -15,18 +15,19 @@ import std.math;
 import sp.engine;
 
 import des.util.stdext.algorithm;
+import des.assimp;
 
 class TestScene : SPScene
 {
 protected:
-    SPLoader loader;
+    SRLoader loader;
 
 public:
     this( Camera cam )
     {
         super( cam, newEMM!MoveLight( 4, 5, 0.2, vec3(0.5,0.1,0.025) ) );
 
-        loader = newEMM!SPLoader;
+        loader = newEMM!SRLoader;
 
         prepareAbstractModel();
         prepareRoomModel();
@@ -65,12 +66,12 @@ protected:
 
     void preparePlaneModel()
     {
-        SPLoader.Mesh mesh;
+        SRMesh mesh;
 
         mesh.indices = [ 0, 1, 3, 1, 2, 3 ];
         mesh.vertices = [vec3(1,1,0),vec3(1,-1,0),vec3(-1,-1,0),vec3(-1,1,0)];
         auto tex_repeat = 10;
-        mesh.texcoords ~= SPLoader.TexCoord( 2, cast(float[])( amap!(a=>a*tex_repeat)( [vec2(1,1),vec2(1,0),vec2(0,0),vec2(0,1)] ) ) );
+        mesh.texcoords ~= SRTexCoord( 2, cast(float[])( amap!(a=>a*tex_repeat)( [vec2(1,1),vec2(1,0),vec2(0,0),vec2(0,1)] ) ) );
         auto x = vec3(1,0,0);
         auto z = vec3(0,0,1);
         mesh.normals = [z,z,z,z];
@@ -93,7 +94,7 @@ class MoveLight : SPLight
 {
     this( float Z, float R = 5, float S = 0.2, vec3 att = vec3(1,0.1,0.01) )
     {
-        super( 4 );
+        super( 10 );
         ltr.pos.z = Z;
         radius = R;
         speed = S;
@@ -125,7 +126,7 @@ protected:
 
 public:
 
-    this( in SPMeshData info, SPMaterial mat )
+    this( in GLMeshData info, SPMaterial mat )
     in { assert( mat !is null ); } body
     {
         super( info, mat );

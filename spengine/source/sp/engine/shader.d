@@ -4,7 +4,6 @@ import sp.engine.base;
 
 import sp.engine.light;
 import sp.engine.material;
-import sp.engine.attrib;
 
 import des.util.helpers;
 
@@ -33,7 +32,7 @@ protected:
     uint[string] attribs;
     uint[string] fragdata;
 
-    uint[string] convInfo( in SPAttrib[] list )
+    uint[string] convInfo( in GLAttrib[] list )
     {
         uint[string] ret;
         foreach( e; list )
@@ -43,7 +42,7 @@ protected:
 
 public:
 
-    this( int vloc, in SPAttrib[] attr_info, uint[string] fragdata )
+    this( int vloc, in GLAttrib[] attr_info, uint[string] fragdata )
     {
         this.vert_loc = vloc;
         this.attribs = convInfo( attr_info );

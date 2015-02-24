@@ -95,9 +95,9 @@ protected:
         shader.setTexture( name ~ ".shadow_map", ll.shadowMap );
         auto crl = cam.resolve(ll);
         shader.setUniform!vec3( name ~ ".cspos", crl.offset );
-        auto bais = mat4( .5,  0,  0, .5, 
-                           0, .5,  0, .5, 
-                           0,  0, .5, .5, 
+        auto bais = mat4( .5,  0,  0, .5,
+                           0, .5,  0, .5,
+                           0,  0, .5, .5,
                            0,  0,  0,  1 );
         auto cam2light = ll.projectMatrix * crl.speedTransformInv;
         shader.setUniform!mat4( name ~ ".fragtr", bais * cam2light );

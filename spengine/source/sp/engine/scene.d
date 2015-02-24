@@ -4,12 +4,12 @@ import std.exception;
 
 import des.util.timer;
 
-import sp.engine.attrib;
+import des.assimp;
+
 import sp.engine.base;
 import sp.engine.material;
 import sp.engine.object;
 import sp.engine.light;
-import sp.engine.loader;
 import sp.engine.shader;
 import sp.engine.render;
 
@@ -41,23 +41,23 @@ protected:
     const @property
     {
         ///
-        SPAttrib defaultVertexAttrib()
-        { return SPAttrib( "vertex", 0, 3 ); }
+        GLAttrib defaultVertexAttrib()
+        { return GLAttrib( "vertex", 0, 3 ); }
 
         ///
-        SPAttrib defaultTCoordAttrib()
-        { return SPAttrib( "tcoord", 1, 2 ); }
+        GLAttrib defaultTCoordAttrib()
+        { return GLAttrib( "tcoord", 1, 2 ); }
 
         ///
-        SPAttrib defaultNormalAttrib()
-        { return SPAttrib( "normal", 2, 3 ); }
+        GLAttrib defaultNormalAttrib()
+        { return GLAttrib( "normal", 2, 3 ); }
 
         ///
-        SPAttrib defaultTangentAttrib()
-        { return SPAttrib( "tangent", 3, 3 ); }
+        GLAttrib defaultTangentAttrib()
+        { return GLAttrib( "tangent", 3, 3 ); }
 
         ///
-        SPAttrib[] defaultAttribs()
+        GLAttrib[] defaultAttribs()
         {
             return [
                 defaultVertexAttrib,
@@ -68,9 +68,9 @@ protected:
         }
     }
 
-    SPMeshData convMesh( in SPLoader.Mesh lm )
+    GLMeshData convMesh( in SRMesh lm )
     {
-        SPMeshData md;
+        GLMeshData md;
 
         md.num_vertices = cast(uint)( lm.vertices.length );
 
@@ -94,15 +94,15 @@ protected:
             texcoords = lm.texcoords[0].data.dup;
         }
 
-        md.buffers ~= SPMeshData.Buffer( lm.vertices.dup, [0] ); // md.attribs[0]
+        md.buffers ~= GLMeshData.Buffer( lm.vertices.dup, [0] ); // md.attribs[0]
 
         if( texcoords )
-            md.buffers ~= SPMeshData.Buffer( texcoords, [1] );   // md.attribs[1]
+            md.buffers ~= GLMeshData.Buffer( texcoords, [1] );   // md.attribs[1]
 
-        md.buffers ~= SPMeshData.Buffer( lm.normals.dup, [2] );  // md.attribs[2]
+        md.buffers ~= GLMeshData.Buffer( lm.normals.dup, [2] );  // md.attribs[2]
 
         if( lm.tangents )
-            md.buffers ~= SPMeshData.Buffer( lm.tangents.dup, [3] ); // md.attribs[3]
+            md.buffers ~= GLMeshData.Buffer( lm.tangents.dup, [3] ); // md.attribs[3]
 
         return md;
     }
@@ -123,7 +123,7 @@ public:
                      "diffuse_map"  : 1,
                      "normal_map"   : 2,
                      "specular_map" : 3,
-                     "position_map" : 4 ];
+                    ];
 
         this.camera = camera;
         this.light = light is null ? newEMM!SPLight(4) : light;

@@ -137,14 +137,14 @@ vec3[3] calcLight( Light ll, vec3 pos, vec3 norm )
     }
 
     float atten = 1.0f / ( ll.attenuation.x +
-                           ll.attenuation.y * ldst + 
+                           ll.attenuation.y * ldst +
                            ll.attenuation.z * ldst * ldst );
 
     float nxdir = max( 0.0, dot( norm, ldir ) );
 
     ret[0] = ll.ambient;
     ret[1] = ll.diffuse * nxdir * atten * visible;
-    ret[2] = ll.specular;
+    //ret[2] = ll.specular;
 
     if( nxdir != 0.0 )
     {
@@ -153,7 +153,7 @@ vec3[3] calcLight( Light ll, vec3 pos, vec3 norm )
         float nxhalf = max( 0.0, dot( norm, hv ) );
         ret[2] = ll.specular * pow( nxhalf, 2 ) * atten * visible;
     }
-    else ret[2] = vec3(0);
+    //else ret[2] = vec3(0);
 
     return ret;
 }
@@ -163,7 +163,6 @@ out vec4 color;
 out vec4 diffuse_map;
 out vec4 normal_map;
 out vec4 specular_map;
-out vec4 position_map;
 
 void main()
 {
@@ -202,12 +201,9 @@ void main()
 
     diffuse_map = getValue( material.diffuse, uv, nutc );
     specular_map = getValue( material.specular, uv, nutc );
+    normal_map = vec4( normal * .5 + .5, 1 );
 
     color = vec4( lr[0], 1.0 ) +
             vec4( lr[1], 1.0 ) * diffuse_map;
             vec4( lr[2], 1.0 ) * specular_map;
-
-    position_map = vec4( vert.pos, gl_FragDepth );
-
-    normal_map = vec4( normal * .5 + .5, 1 );
 }
