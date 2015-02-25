@@ -53,6 +53,9 @@ protected:
             //app.quit();
         });
         connect( idle, &(scene.idle) );
+
+        glEnable( GL_PRIMITIVE_RESTART );
+        glPrimitiveRestartIndex( uint.max );
     }
 
 public:

@@ -1,12 +1,12 @@
-module sp.engine.object;
+module sp.graphics.object;
 
-import sp.engine.base;
+import sp.graphics.base;
 
-import sp.engine.material;
-import sp.engine.shader;
+import sp.graphics.material;
+import sp.graphics.shader;
 
 ///
-class SPDrawObject : GLMeshObject, SpaceNode
+class SPGDrawObject : GLMeshObject, SpaceNode
 {
     mixin DES;
     mixin SpaceNodeHelper;
@@ -14,14 +14,14 @@ class SPDrawObject : GLMeshObject, SpaceNode
 protected:
 
     ///
-    SPMaterial material;
+    SPGMaterial material;
 
 public:
 
     Signal!float idle;
 
     ///
-    this( in GLMeshData md, SPMaterial mat )
+    this( in GLMeshData md, SPGMaterial mat )
     in { assert( mat !is null ); } body
     {
         super( md );
@@ -34,7 +34,7 @@ public:
     bool visible = true;
 
     ///
-    void draw( SPObjectShader shader, Camera camera )
+    void draw( SPGObjectShader shader, Camera camera )
     in
     {
         assert( shader !is null );
@@ -60,16 +60,4 @@ public:
 
     ///
     void setTransform( in mat4 m ) { self_mtr = m; }
-
-protected:
-
-    override void preDraw() { if( indices !is null ) indices.bind(); }
-
-    ///
-    void drawArrays()
-    { super.drawArrays( mode, num_vertices ); }
-
-    ///
-    void drawElements()
-    { super.drawElements( mode, indices.elementCount ); }
 }

@@ -1,18 +1,18 @@
-module sp.engine.render;
+module sp.graphics.render;
 
-import sp.engine.base;
-import sp.engine.light;
+import sp.graphics.base;
+import sp.graphics.light;
 
 import des.util.helpers;
 
-class SPRender : GLRender
+class SPGRender : GLRender
 {
     mixin DES;
 
 protected:
 
     CommonGLShaderProgram shader;
-    SPScreenPlane screen;
+    SPGScreenPlane screen;
 
     uint[string] named_colors;
 
@@ -48,7 +48,7 @@ public:
         auto ss = parseGLShaderSource( import(sp) );
         shader = newEMM!CommonGLShaderProgram( ss );
 
-        screen = newEMM!SPScreenPlane;
+        screen = newEMM!SPGScreenPlane;
     }
 
     ///
@@ -60,7 +60,7 @@ public:
     }
 
     Camera cam;
-    SPLight light;
+    SPGLight light;
 
     ///
     void draw( GLTexture tex = null )
@@ -84,7 +84,7 @@ public:
 
 protected:
 
-    void setLightByName( string name, Camera cam, SPLight ll )
+    void setLightByName( string name, Camera cam, SPGLight ll )
     {
         shader.setUniform!int ( name ~ ".type", ll.type );
         shader.setUniform!vec3( name ~ ".ambient", ll.ambient );
@@ -105,7 +105,7 @@ protected:
 }
 
 ///
-class SPScreenPlane : GLObject
+class SPGScreenPlane : GLObject
 {
     ///
     GLBuffer vert;

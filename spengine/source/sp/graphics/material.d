@@ -1,4 +1,4 @@
-module sp.engine.material;
+module sp.graphics.material;
 
 import des.math.linear;
 import des.gl.base;
@@ -6,11 +6,11 @@ import des.util.arch;
 
 import des.il;
 
-import sp.engine.base;
-import sp.engine.shader;
+import sp.graphics.base;
+import sp.graphics.shader;
 
 ///
-class SPTxData : DesObject
+class SPGTxData : DesObject
 {
     mixin DES;
 
@@ -42,12 +42,12 @@ class SPTxData : DesObject
 }
 
 ///
-class SPMaterial : DesObject
+class SPGMaterial : DesObject
 {
     mixin DES;
 
     ///
-    SPTxData diffuse, specular, bump, normal;
+    SPGTxData diffuse, specular, bump, normal;
 
     // tx ambient; tx emission; float shininess;
 
@@ -59,9 +59,9 @@ class SPMaterial : DesObject
     ///
     this()
     {
-        diffuse  = newEMM!SPTxData( 0, vec4( vec3(.5), 1 ) );
-        specular = newEMM!SPTxData( 1, vec4( vec3(.5), 1 ) );
-        bump     = newEMM!SPTxData( 2, vec4(0) );
-        normal   = newEMM!SPTxData( 3, vec4(.5,.5,1,1) );
+        diffuse  = newEMM!SPGTxData( 0, vec4( vec3(.5), 1 ) );
+        specular = newEMM!SPGTxData( 1, vec4( vec3(.5), 1 ) );
+        bump     = newEMM!SPGTxData( 2, vec4(0) );
+        normal   = newEMM!SPGTxData( 3, vec4(.5,.5,1,1) );
     }
 }

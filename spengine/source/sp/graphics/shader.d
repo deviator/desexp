@@ -1,9 +1,9 @@
-module sp.engine.shader;
+module sp.graphics.shader;
 
-import sp.engine.base;
+import sp.graphics.base;
 
-import sp.engine.light;
-import sp.engine.material;
+import sp.graphics.light;
+import sp.graphics.material;
 
 import des.util.helpers;
 
@@ -15,16 +15,16 @@ auto getShaders( string[] path... )
     return parseGLShaderSource( readText( appPath( path ) ) );
 }
 
-interface SPObjectShader
+interface SPGObjectShader
 {
     void setTransform( in mat4 tr, in mat4 prj );
-    void setLight( Camera camera, SPLight light );
-    void setMaterial( SPMaterial mat );
+    void setLight( Camera camera, SPGLight light );
+    void setMaterial( SPGMaterial mat );
     void checkAttribs( int[] enabled );
     void setUp();
 }
 
-class SPMainShader : CommonGLShaderProgram, SPObjectShader
+class SPGMainShader : CommonGLShaderProgram, SPGObjectShader
 {
 protected:
     int vert_loc;
@@ -58,12 +58,12 @@ public:
         setUniform!mat4( "cspace", tr );
     }
 
-    void setLight( Camera camera, SPLight light )
+    void setLight( Camera camera, SPGLight light )
     {
         setLightByName( "light", camera, light );
     }
 
-    void setMaterial( SPMaterial mat )
+    void setMaterial( SPGMaterial mat )
     {
         setTxData( "material.diffuse", mat.diffuse );
         setTxData( "material.specular", mat.specular );
@@ -94,7 +94,7 @@ protected:
     override uint[string] fragDataLocations() @property
     { return fragdata; }
 
-    void setTxData( string name, SPTxData tx )
+    void setTxData( string name, SPGTxData tx )
     {
         setUniform!bool( name ~ ".use_tex", tx.use_tex );
         setUniform!vec4( name ~ ".val", tx.val );
@@ -102,7 +102,7 @@ protected:
             setTexture( name ~ ".tex", tx.tex );
     }
 
-    void setLightByName( string name, Camera cam, SPLight ll )
+    void setLightByName( string name, Camera cam, SPGLight ll )
     {
         setUniform!int ( name ~ ".type", ll.type );
         setUniform!vec3( name ~ ".ambient", ll.ambient );
@@ -122,7 +122,7 @@ protected:
     }
 }
 
-class SPLightShader : CommonGLShaderProgram, SPObjectShader
+class SPGLightShader : CommonGLShaderProgram, SPGObjectShader
 {
     this()
     {
@@ -135,9 +135,9 @@ class SPLightShader : CommonGLShaderProgram, SPObjectShader
         setUniform!mat4( "fprj", fprj );
     }
 
-    void setLight( Camera camera, SPLight light ) {}
+    void setLight( Camera camera, SPGLight light ) {}
 
-    void setMaterial( SPMaterial mat ) {}
+    void setMaterial( SPGMaterial mat ) {}
 
     void checkAttribs( int[] enabled )
     { enforce( canFind( enabled, 0 ) ); }

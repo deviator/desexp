@@ -1,4 +1,4 @@
-module sp.engine.scene;
+module sp.graphics.scene;
 
 import std.exception;
 
@@ -6,31 +6,31 @@ import des.util.timer;
 
 import des.assimp;
 
-import sp.engine.base;
-import sp.engine.material;
-import sp.engine.object;
-import sp.engine.light;
-import sp.engine.shader;
-import sp.engine.render;
+import sp.graphics.base;
+import sp.graphics.material;
+import sp.graphics.object;
+import sp.graphics.light;
+import sp.graphics.shader;
+import sp.graphics.render;
 
 ///
-class SPScene : DesObject
+class SPGScene : DesObject
 {
     mixin DES;
 
 protected:
 
     ///
-    SPRender render;
+    SPGRender render;
 
     ///
-    SPObjectShader obj_shader;
+    SPGObjectShader obj_shader;
 
     ///
-    SPObjectShader light_shader;
+    SPGObjectShader light_shader;
 
     ///
-    SPDrawObject[] objs;
+    SPGDrawObject[] objs;
 
     ///
     float time = 0;
@@ -68,9 +68,28 @@ protected:
         }
     }
 
-    GLMeshData convMesh( in SRMesh lm )
+    GLMeshData convMesh( in SMMesh lm )
     {
         GLMeshData md;
+
+        final switch( lm.type )
+        {
+            case lm.Type.POINTS:
+                md.draw_mode = GLObject.DrawMode.POINTS;
+                break;
+            case lm.Type.LINES:
+                md.draw_mode = GLObject.DrawMode.LINES;
+                break;
+            case lm.Type.LINE_STRIP:
+                md.draw_mode = GLObject.DrawMode.LINE_STRIP;
+                break;
+            case lm.Type.TRIANGLES:
+                md.draw_mode = GLObject.DrawMode.TRIANGLES;
+                break;
+            case lm.Type.TRIANGLE_STRIP:
+                md.draw_mode = GLObject.DrawMode.TRIANGLE_STRIP;
+                break;
+        }
 
         md.num_vertices = cast(uint)( lm.vertices.length );
 
@@ -112,10 +131,10 @@ public:
     ///
     Camera camera;
     ///
-    SPLight light;
+    SPGLight light;
 
     ///
-    this( Camera camera, SPLight light )
+    this( Camera camera, SPGLight light )
     in{ assert( camera !is null ); } body
     {
         uint[string] frag_info = [
@@ -126,16 +145,16 @@ public:
                     ];
 
         this.camera = camera;
-        this.light = light is null ? newEMM!SPLight(4) : light;
+        this.light = light is null ? newEMM!SPGLight(4) : light;
 
         int dvl = defaultVertexAttrib.location;
 
-        obj_shader = newEMM!SPMainShader( dvl, defaultAttribs, frag_info );
-        light_shader = newEMM!SPLightShader;
+        obj_shader = newEMM!SPGMainShader( dvl, defaultAttribs, frag_info );
+        light_shader = newEMM!SPGLightShader;
 
         tm = new Timer;
 
-        render = newEMM!SPRender( frag_info );
+        render = newEMM!SPGRender( frag_info );
         render.cam = camera;
         render.light = light;
 
@@ -145,7 +164,7 @@ public:
     }
 
     ///
-    void addObject( SPDrawObject obj )
+    void addObject( SPGDrawObject obj )
     in{ assert( obj !is null ); } body
     { objs ~= registerChildEMM( obj ); }
 
@@ -193,7 +212,7 @@ public:
 
 protected:
 
-    void drawObjects( SPObjectShader shader, Camera cam )
+    void drawObjects( SPGObjectShader shader, Camera cam )
     {
         shader.setUp();
         shader.setLight( cam, light );

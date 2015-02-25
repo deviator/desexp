@@ -1,4 +1,4 @@
-module sp.engine.base;
+module sp.graphics.base;
 
 public
 {
@@ -10,7 +10,7 @@ public
 }
 
 ///
-class SPEngineException : Exception
+class SPGException : Exception
 {
     ///
     this( string msg, string file=__FILE__, size_t line=__LINE__ ) pure nothrow @safe

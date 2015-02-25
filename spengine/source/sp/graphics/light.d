@@ -1,8 +1,8 @@
-module sp.engine.light;
+module sp.graphics.light;
 
-import sp.engine.base;
+import sp.graphics.base;
 
-class SPLight : DesObject, Camera
+class SPGLight : DesObject, Camera
 {
     mixin DES;
     mixin CameraHelper;
