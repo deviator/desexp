@@ -137,24 +137,17 @@ public:
     this( Camera camera, SPGLight light )
     in{ assert( camera !is null ); } body
     {
-        uint[string] frag_info = [
-                     "color"        : 0,
-                     "diffuse_map"  : 1,
-                     "normal_map"   : 2,
-                     "specular_map" : 3,
-                    ];
-
         this.camera = camera;
         this.light = light is null ? newEMM!SPGLight(4) : light;
 
         int dvl = defaultVertexAttrib.location;
 
-        obj_shader = newEMM!SPGMainShader( dvl, defaultAttribs, frag_info );
+        obj_shader = newEMM!SPGMainShader( dvl, defaultAttribs );
         light_shader = newEMM!SPGLightShader;
 
         tm = new Timer;
 
-        render = newEMM!SPGRender( frag_info );
+        render = newEMM!SPGRender;
         render.cam = camera;
         render.light = light;
 
@@ -215,7 +208,6 @@ protected:
     void drawObjects( SPGObjectShader shader, Camera cam )
     {
         shader.setUp();
-        shader.setLight( cam, light );
         foreach( obj; objs )
             obj.draw( shader, cam );
     }
@@ -234,14 +226,13 @@ protected:
 
     void setDrawFuncs()
     {
-        addDF( "clear draw", { drawObjects( obj_shader, camera ); } );
-        //addDF( "fbo depth", { render.draw( render.getDepth() ); } );
-        //addDF( "fbo simple", { render.draw( render.getColor(0) ); } );
-        //addDF( "fbo diffuse", { render.draw( render.getColor(1) ); } );
-        //addDF( "fbo normal", { render.draw( render.getColor(2) ); } );
-        //addDF( "fbo specular", { render.draw( render.getColor(3) ); } );
-        //addDF( "light shadow map", { render.draw( light.shadowMap ); } );
-        addDF( "fbo result", { render.draw(); } );
+        addDF( "result", { render.draw(); } );
+        //addDF( "depth", { render.drawTexture( render.t_depth ); } );
+        //addDF( "diffuse", { render.drawTexture( render.t_diffuse ); } );
+        //addDF( "normal", { render.drawTexture( render.t_normal ); } );
+        //addDF( "specular", { render.drawTexture( render.t_specular ); } );
+        //addDF( "shade", { render.drawTexture( render.t_color ); } );
+        addDF( "info", { render.drawTexture( render.t_info ); } );
     }
 
     void addDF( string name, void delegate() func )

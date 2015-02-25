@@ -18,7 +18,6 @@ auto getShaders( string[] path... )
 interface SPGObjectShader
 {
     void setTransform( in mat4 tr, in mat4 prj );
-    void setLight( Camera camera, SPGLight light );
     void setMaterial( SPGMaterial mat );
     void checkAttribs( int[] enabled );
     void setUp();
@@ -30,7 +29,6 @@ protected:
     int vert_loc;
 
     uint[string] attribs;
-    uint[string] fragdata;
 
     uint[string] convInfo( in GLAttrib[] list )
     {
@@ -42,13 +40,12 @@ protected:
 
 public:
 
-    this( int vloc, in GLAttrib[] attr_info, uint[string] fragdata )
+    this( int vloc, in GLAttrib[] attr_info )
     {
         this.vert_loc = vloc;
         this.attribs = convInfo( attr_info );
-        this.fragdata = fragdata;
 
-        super( parseGLShaderSource( import( bnPath( "shaders", "sp_obj_shader.glsl" ) ) ) );
+        super( parseGLShaderSource( import( bnPath( "shaders", "firstpass.glsl" ) ) ) );
     }
 
     void setTransform( in mat4 tr, in mat4 prj )
@@ -56,11 +53,6 @@ public:
         auto fprj = prj * tr;
         setUniform!mat4( "fprj", fprj );
         setUniform!mat4( "cspace", tr );
-    }
-
-    void setLight( Camera camera, SPGLight light )
-    {
-        setLightByName( "light", camera, light );
     }
 
     void setMaterial( SPGMaterial mat )
@@ -91,34 +83,11 @@ protected:
     override uint[string] attribLocations() @property
     { return attribs; }
 
-    override uint[string] fragDataLocations() @property
-    { return fragdata; }
-
     void setTxData( string name, SPGTxData tx )
     {
         setUniform!bool( name ~ ".use_tex", tx.use_tex );
         setUniform!vec4( name ~ ".val", tx.val );
-        if( tx.use_tex )
-            setTexture( name ~ ".tex", tx.tex );
-    }
-
-    void setLightByName( string name, Camera cam, SPGLight ll )
-    {
-        setUniform!int ( name ~ ".type", ll.type );
-        setUniform!vec3( name ~ ".ambient", ll.ambient );
-        setUniform!vec3( name ~ ".diffuse", ll.diffuse );
-        setUniform!vec3( name ~ ".specular", ll.specular );
-        setUniform!vec3( name ~ ".attenuation", ll.attenuation );
-        setUniform!bool( name ~ ".use_shadow", ll.use_shadow );
-        setTexture( name ~ ".shadow_map", ll.shadowMap );
-        auto crl = cam.resolve(ll);
-        setUniform!vec3( name ~ ".cspos", crl.offset );
-        auto bais = mat4( .5,  0,  0, .5,
-                           0, .5,  0, .5,
-                           0,  0, .5, .5,
-                           0,  0,  0,  1 );
-        auto cam2light = ll.projectMatrix * crl.speedTransformInv;
-        setUniform!mat4( name ~ ".fragtr", bais * cam2light );
+        if( tx.use_tex ) setTexture( name ~ ".tex", tx.tex );
     }
 }
 
@@ -126,7 +95,7 @@ class SPGLightShader : CommonGLShaderProgram, SPGObjectShader
 {
     this()
     {
-        super( parseGLShaderSource( import( bnPath( "shaders", "sp_light_shader.glsl" ) ) ) );
+        super( parseGLShaderSource( import( bnPath( "shaders", "shadow.glsl" ) ) ) );
     }
 
     void setTransform( in mat4 tr, in mat4 prj )
@@ -134,8 +103,6 @@ class SPGLightShader : CommonGLShaderProgram, SPGObjectShader
         auto fprj = prj * tr;
         setUniform!mat4( "fprj", fprj );
     }
-
-    void setLight( Camera camera, SPGLight light ) {}
 
     void setMaterial( SPGMaterial mat ) {}
 

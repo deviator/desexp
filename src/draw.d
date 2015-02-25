@@ -56,7 +56,9 @@ protected:
         loader.loadScene( appPath( "..", "data", "abstract_model.dae" ) );
 
         auto mat = newEMM!SPGMaterial();
-        mat.diffuse.image( imLoad( appPath( "..", "data", "abstract_model_color.png" ) ) );
+        auto img = imLoad( appPath( "..", "data", "abstract_model_color.png" ) );
+        mat.diffuse.image( img );
+        mat.specular.image( img );
 
         addObject( new TestObject( convMesh( loader.getMesh(0) ), mat ) );
     }

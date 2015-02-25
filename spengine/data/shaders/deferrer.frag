@@ -1,31 +1,13 @@
-//### vert
-#version 330
-
-layout(location=0) in vec2 vertex;
-
-out vec2 uv;
-
-void main()
-{
-    gl_Position = vec4( vertex, 0, 1 );
-    uv = vertex / 2.0f + 0.5f;
-}
-
-//### frag
 #version 330
 
 in vec2 uv;
 
-uniform bool simple;
-
 uniform mat4 p2cs; // transform to camera space
-uniform sampler2D depth;
 
-uniform sampler2D tex;
-uniform sampler2D color;
-uniform sampler2D diffuse_map;
-uniform sampler2D normal_map;
-uniform sampler2D specular_map;
+uniform sampler2D depth;
+uniform sampler2D diffuse;
+uniform sampler2D specular;
+uniform sampler2D normal;
 
 uniform struct Light
 {
@@ -85,7 +67,7 @@ vec3[3] calcLight( Light ll, vec3 pos, vec3 norm )
     }
 
     float atten = 1.0f / ( ll.attenuation.x +
-                           ll.attenuation.y * ldst + 
+                           ll.attenuation.y * ldst +
                            ll.attenuation.z * ldst * ldst );
 
     float nxdir = max( 0.0, dot( norm, ldir ) );
@@ -93,7 +75,7 @@ vec3[3] calcLight( Light ll, vec3 pos, vec3 norm )
     ret[0] = ll.ambient;
     ret[1] = ll.diffuse * nxdir * atten * visible;
 
-    if( nxdir != 0.0 )
+    if( nxdir > -0.0001 )
     {
         vec3 cvec = normalize( -pos );
         vec3 hv = normalize( lvec + cvec );
@@ -104,22 +86,52 @@ vec3[3] calcLight( Light ll, vec3 pos, vec3 norm )
     return ret;
 }
 
-out vec4 result;
+vec4 diff( sampler2D map, vec4 c, vec2 crd, ivec2 o1, ivec2 o2 )
+{ return ( c - textureOffset( map, crd, o1 ) ) - ( textureOffset( map, crd, o2 ) - c ); }
+
+float avgComp( vec4 ov, int cmp )
+{
+    vec4 v = abs(ov);
+    if( cmp == 1 ) return v.r;
+    if( cmp == 2 ) return ( v.r + v.g ) / 2.0f;
+    if( cmp == 3 ) return ( v.r + v.g + v.b ) / 3.0f;
+    if( cmp == 4 ) return ( v.r + v.g + v.b + v.a ) / 4.0f;
+}
+
+float edgeDetect( sampler2D map, vec2 crd, int cmp )
+{
+    float ret = 0.0f;
+
+    vec4 c = texture( map, crd );
+    ret += avgComp( diff( map, c, crd, ivec2(1,0), ivec2(-1,0) ), cmp ); // horisontal
+    ret += avgComp( diff( map, c, crd, ivec2(0,1), ivec2(0,-1) ), cmp ); // vertical
+    ret += avgComp( diff( map, c, crd, ivec2(1,1), ivec2(-1,-1) ), cmp ); // diagonal 1
+    ret += avgComp( diff( map, c, crd, ivec2(1,-1), ivec2(-1,1) ), cmp ); // diagonal 2
+
+    return ret / 4;
+}
+
+float binThreshold( float value, float th )
+{ return value > th ? 1.0f : 0.0f; }
+
+layout(location=0) out vec4 color;
+layout(location=1) out vec4 info; // r:edge
 
 void main()
 {
-    if( simple ) result = texture( tex, uv );
-    else
-    {
-        vec4 un_pos = p2cs * vec4( uv*2-1, (texture(depth,uv).r*2-1), 1 );
-        vec3 pos = un_pos.xyz / un_pos.w;
+    float edge = ( binThreshold( edgeDetect( normal, uv, 3 ), 0.1f ) +
+                   binThreshold( edgeDetect( depth, uv, 1 ), 0.0002f ) ) / 2.0f;
 
-        vec3 norm = normalize( texture( normal_map, uv ).xyz * 2 - 1 );
+    info = vec4( edge, 0, 0, 0 );
 
-        vec3[3] lr = calcLight( light, pos, norm );
+    vec4 un_pos = p2cs * vec4( uv*2-1, ( texture(depth,uv).r*2-1 ), 1 );
+    vec3 pos = un_pos.xyz / un_pos.w;
 
-        result = vec4( lr[0], 1.0 ) +
-                 vec4( lr[1], 1.0 ) * texture( diffuse_map, uv ) +
-                 vec4( lr[2], 1.0 ) * texture( specular_map, uv );
-    }
+    vec3 norm = normalize( texture(normal,uv).xyz*2-1 );
+
+    vec3[3] lr = calcLight( light, pos, norm );
+
+    color = vec4( lr[0], 1.0 ) +
+            vec4( lr[1], 1.0 ) * texture( diffuse, uv ) +
+            vec4( lr[2], 1.0 ) * texture( specular, uv );
 }
