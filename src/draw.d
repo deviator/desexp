@@ -68,8 +68,6 @@ protected:
         loader.loadScene( appPath( "..", "data", "room.dae" ) );
 
         auto mat = newEMM!SPGMaterial();
-        mat.diffuse.image( imLoad( appPath( "..", "data", "masonry-wall-texture.jpg" ) ) );
-        mat.normal.image( imLoad( appPath( "..", "data", "masonry-wall-normal-map.jpg" ) ) );
 
         auto o = new SPGDrawObject( convMesh( loader.getMesh(0) ), mat );
         o.offset = vec3(0,0,-2);
@@ -100,7 +98,7 @@ protected:
     {
         auto mg = new SMSphereMeshGenerator( 1, 32, 32 );
         auto o = new SPGDrawObject( convMesh( mg.genMesh( "sphere" ) ), mat_wall );
-        o.setTransform( mat4().setCol(3,vec4(3,3,0,1)) );
+        o.setTransform( mat4().setCol(3,vec4(3,3,-.5,1)) );
         addObject( o );
     }
 }
@@ -114,6 +112,7 @@ class MoveLight : SPGLight
         radius = R;
         speed = S;
         attenuation = att;
+        use_shadow = false;
     }
 
     float speed = 0.2;

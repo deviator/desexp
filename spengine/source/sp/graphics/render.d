@@ -26,7 +26,8 @@ public:
     GLTexture t_diffuse;
     GLTexture t_normal;
     GLTexture t_specular;
-    GLTexture t_color;
+    GLTexture t_shade_diffuse;
+    GLTexture t_shade_specular;
     GLTexture t_info;
 
     this()
@@ -57,6 +58,8 @@ public:
     Camera cam;
     SPGLight light;
 
+    bool aliased;
+
     ///
     void draw()
     {
@@ -68,8 +71,6 @@ public:
         auto p2cs = cam.projectMatrix.inv;
         sp_deferrer.setUniform!mat4( "p2cs", p2cs );
         sp_deferrer.setTexture( "depth", t_depth );
-        sp_deferrer.setTexture( "diffuse", t_diffuse );
-        sp_deferrer.setTexture( "specular", t_specular );
         sp_deferrer.setTexture( "normal", t_normal );
 
         screen.draw();
@@ -80,7 +81,11 @@ public:
         //sp_postproc.setUniform!mat4( "p2cs", p2cs );
         //sp_postproc.setTexture( "depth", t_depth );
         sp_postproc.setTexture( "info", t_info );
-        sp_postproc.setTexture( "color", t_color );
+        sp_postproc.setTexture( "diffuse", t_diffuse );
+        sp_postproc.setTexture( "specular", t_specular );
+        sp_postproc.setTexture( "shade_diffuse", t_shade_diffuse );
+        sp_postproc.setTexture( "shade_specular", t_shade_specular );
+        sp_postproc.setUniform!bool( "aliased", aliased );
 
         screen.draw();
     }
@@ -115,8 +120,9 @@ protected:
         t_diffuse = defaultColor(1);
         t_normal = defaultColor(2);
         t_specular = defaultColor(3);
-        t_color = defaultColor(4);
-        t_info = defaultColor(5);
+        t_shade_diffuse = defaultColor(4);
+        t_shade_specular = defaultColor(5);
+        t_info = defaultColor(6);
     }
 
     void prepareShaders()
@@ -126,7 +132,7 @@ protected:
 
         auto screen_v = newEMM!GLVertShader( import( shdir( "screen.vert" ) ) );
 
-        auto deferrer_f = new GLFragShader( import( shdir( "deferrer.frag" ) ) );
+        auto deferrer_f = new GLFragShader( import( shdir( "drshade.frag" ) ) );
         auto postproc_f = new GLFragShader( import( shdir( "postproc.frag" ) ) );
         auto simpletex_f = new GLFragShader( import( shdir( "simpletexture.frag" ) ) );
 
@@ -145,9 +151,10 @@ protected:
         r_deferrer.drawBuffers( 0, 1, 2 );
 
         r_postproc = newEMM!GLRender;
-        r_postproc.setColor( t_color, 0 );
-        r_postproc.setColor( t_info, 1 );
-        r_postproc.drawBuffers( 0, 1 );
+        r_postproc.setColor( t_shade_diffuse, 0 );
+        r_postproc.setColor( t_shade_specular, 1 );
+        r_postproc.setColor( t_info, 2 );
+        r_postproc.drawBuffers( 0, 1, 2 );
     }
 
     ///
@@ -155,7 +162,6 @@ protected:
                          Camera cam, SPGLight ll )
     {
         shader.setUniform!int ( name ~ ".type", ll.type );
-        shader.setUniform!vec3( name ~ ".ambient", ll.ambient );
         shader.setUniform!vec3( name ~ ".diffuse", ll.diffuse );
         shader.setUniform!vec3( name ~ ".specular", ll.specular );
         shader.setUniform!vec3( name ~ ".attenuation", ll.attenuation );

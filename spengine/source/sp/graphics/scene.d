@@ -171,15 +171,24 @@ public:
     ///
     void draw()
     {
-        light.bind();
-        drawObjects( light_shader, light );
-        light.unbind();
+        if( light.use_shadow )
+        {
+            light.bind();
+            drawObjects( light_shader, light );
+            light.unbind();
+        }
 
         render.bind();
         drawObjects( obj_shader, camera );
         render.unbind();
 
         listDF[dfNO].func();
+    }
+
+    void changeAliased()
+    {
+        render.aliased = !render.aliased;
+        logger.info( "aliased: ", render.aliased );
     }
 
     ///

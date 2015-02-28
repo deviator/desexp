@@ -5,14 +5,11 @@ in vec2 uv;
 uniform mat4 p2cs; // transform to camera space
 
 uniform sampler2D depth;
-uniform sampler2D diffuse;
-uniform sampler2D specular;
 uniform sampler2D normal;
 
 uniform struct Light
 {
     int  type;
-    vec3 ambient;
     vec3 diffuse;
     vec3 specular;
     vec3 attenuation;
@@ -45,13 +42,12 @@ float getSmoothShadow( sampler2D sm, vec4 crd )
     return ret / 9;
 }
 
-/// ambient, diffuse, specular
-vec3[3] calcLight( Light ll, vec3 pos, vec3 norm )
+/// diffuse, specular
+vec3[2] calcLight( Light ll, vec3 pos, vec3 norm, float spow )
 {
-    vec3[3] ret;
+    vec3[2] ret;
     ret[0] = vec3(0);
     ret[1] = vec3(0);
-    ret[2] = vec3(0);
 
     if( ll.type < 0 ) return ret;
 
@@ -72,15 +68,14 @@ vec3[3] calcLight( Light ll, vec3 pos, vec3 norm )
 
     float nxdir = max( 0.0, dot( norm, ldir ) );
 
-    ret[0] = ll.ambient;
-    ret[1] = ll.diffuse * nxdir * atten * visible;
+    ret[0] = ll.diffuse * nxdir * atten * visible;
 
-    if( nxdir > -0.0001 )
+    if( nxdir > 0 )
     {
         vec3 cvec = normalize( -pos );
         vec3 hv = normalize( lvec + cvec );
         float nxhalf = max( 0.0, dot( norm, hv ) );
-        ret[2] = ll.specular * pow( nxhalf, 2 ) * atten * visible;
+        ret[1] = ll.specular * pow( nxhalf, spow ) * atten * visible;
     }
 
     return ret;
@@ -114,8 +109,9 @@ float edgeDetect( sampler2D map, vec2 crd, int cmp )
 float binThreshold( float value, float th )
 { return value > th ? 1.0f : 0.0f; }
 
-layout(location=0) out vec4 color;
-layout(location=1) out vec4 info; // r:edge
+layout(location=0) out vec4 shade_diffuse;
+layout(location=1) out vec4 shade_specular;
+layout(location=2) out vec4 info; // r:edge
 
 void main()
 {
@@ -129,9 +125,8 @@ void main()
 
     vec3 norm = normalize( texture(normal,uv).xyz*2-1 );
 
-    vec3[3] lr = calcLight( light, pos, norm );
+    vec3[2] lr = calcLight( light, pos, norm, 4 );
 
-    color = vec4( lr[0], 1.0 ) +
-            vec4( lr[1], 1.0 ) * texture( diffuse, uv ) +
-            vec4( lr[2], 1.0 ) * texture( specular, uv );
+    shade_diffuse = vec4( lr[0], 1 );
+    shade_specular = vec4( lr[1], 1 );
 }

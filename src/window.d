@@ -20,7 +20,7 @@ protected:
 
     override void prepare()
     {
-        cam = new MouseControlCamera;
+        cam = new MouseControlCamera( vec3( 8, -2, 3 ) );
         cam.fov = 90;
 
         scene = newEMM!TestScene( cam );
@@ -35,6 +35,8 @@ protected:
                     scene.newView();
                 if( ke.scan == ke.Scan.L )
                     scene.changeMoveLight();
+                if( ke.scan == ke.Scan.A )
+                    scene.changeAliased();
             }
         });
         connect( mouse, &(cam.mouseReaction) );
