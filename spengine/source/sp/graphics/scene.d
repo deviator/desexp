@@ -2,7 +2,7 @@ module sp.graphics.scene;
 
 import std.exception;
 
-import des.util.timer;
+//import des.util.timer;
 
 import des.assimp;
 
@@ -34,9 +34,6 @@ protected:
 
     ///
     float time = 0;
-
-    ///
-    Timer tm;
 
     const @property
     {
@@ -145,7 +142,7 @@ public:
         obj_shader = newEMM!SPGMainShader( dvl, defaultAttribs );
         light_shader = newEMM!SPGLightShader;
 
-        tm = new Timer;
+        sw.start();
 
         render = newEMM!SPGRender;
         render.cam = camera;
@@ -191,10 +188,22 @@ public:
         logger.info( "aliased: ", render.aliased );
     }
 
+    import std.datetime;
+    StopWatch sw;
+
+    auto cycle()
+    {
+        sw.stop();
+        auto dt = sw.peek().to!("seconds",double);
+        sw.reset();
+        sw.start();
+        return dt;
+    }
+
     ///
     void idle()
     {
-        auto dt = tm.cycle();
+        auto dt = cycle();
         light.idle( dt );
         foreach( obj; objs ) obj.idle( dt );
     }

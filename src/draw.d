@@ -5,7 +5,6 @@ import std.conv : to;
 import des.gl.base;
 import des.space;
 import des.math.linear;
-import des.util.helpers;
 
 import des.il.io;
 
@@ -14,7 +13,7 @@ import std.math;
 
 import sp.graphics;
 
-import des.util.stdext.algorithm;
+import des.stdx;
 import des.assimp;
 
 class TestScene : SPGScene

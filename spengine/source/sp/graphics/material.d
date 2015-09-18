@@ -2,7 +2,7 @@ module sp.graphics.material;
 
 import des.math.linear;
 import des.gl.base;
-import des.util.arch;
+import des.arch;
 
 import des.il;
 
@@ -31,7 +31,7 @@ class SPGTxData : DesObject
     }
 
     ///
-    void image( in Image2 img )
+    void image( in Image img )
     {
         tex.image( img );
         use_tex = 1;

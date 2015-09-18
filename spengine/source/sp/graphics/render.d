@@ -3,7 +3,7 @@ module sp.graphics.render;
 import sp.graphics.base;
 import sp.graphics.light;
 
-import des.util.helpers;
+import des.stdx;
 
 class SPGRender : DesObject
 {

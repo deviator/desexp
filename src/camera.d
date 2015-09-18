@@ -5,7 +5,7 @@ import des.math.linear;
 import des.space;
 
 import des.app.event;
-import des.util.logsys;
+import des.log;
 
 class MouseControlCamera : SimpleCamera
 {

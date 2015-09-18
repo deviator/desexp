@@ -3,10 +3,10 @@ module sp.graphics.base;
 public
 {
     import des.math.linear;
-    import des.util.data.type;
+    import des.stdx.type;
     import des.gl.base;
     import des.space;
-    import des.util.arch;
+    import des.arch;
 }
 
 ///

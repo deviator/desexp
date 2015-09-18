@@ -5,7 +5,7 @@ import sp.graphics.base;
 import sp.graphics.light;
 import sp.graphics.material;
 
-import des.util.helpers;
+import des.stdx;
 
 import std.algorithm : canFind;
 

@@ -1,7 +1,7 @@
 module main;
 
 import des.app;
-import des.util.logsys;
+import des.log;
 
 import window;
 

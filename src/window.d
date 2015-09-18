@@ -1,9 +1,8 @@
 module window;
 
 import des.app;
-import des.util.stdext.algorithm;
-import des.util.logsys;
-import des.util.timer;
+import des.stdx;
+import des.log;
 
 import camera;
 

@@ -1,0 +1,7 @@
+name "desexp"
+targetPath "bin"
+targetType "executable"
+importPaths "spengine/source"
+sourcePaths "src" "spengine/source"
+stringImportPaths "data" "spengine/data"
+dependency "des" path="des"
